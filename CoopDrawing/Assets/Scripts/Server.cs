@@ -84,15 +84,24 @@ public class Server : MonoBehaviour
         {
             // Begin game
             _stateMachine.SetState<PlayingState>();
+            // Tell all clients about the new state
+            StateChange stateChange = new StateChange()
+            {
+                StateId = _stateMachine.GetStateId(_stateMachine.CurrentState),
+            };
+            ArraySegment<byte> bytes = Writer.SerializeToByteSegment(stateChange);
+            _webServer.SendAll(_connectedPeers, bytes);
         }
-        
-        // Send current state to client
-        StateChange stateChange = new StateChange()
+        else
         {
-            StateId = _stateMachine.GetStateId(_stateMachine.CurrentState),
-        };
-        ArraySegment<byte> bytes = Writer.SerializeToByteSegment(stateChange);
-        _webServer.SendOne(peerId, bytes);
+            // Send current state to connecting client
+            StateChange stateChange = new StateChange()
+            {
+                StateId = _stateMachine.GetStateId(_stateMachine.CurrentState),
+            };
+            ArraySegment<byte> bytes = Writer.SerializeToByteSegment(stateChange);
+            _webServer.SendOne(peerId, bytes);   
+        }
     }
 
     private void WebServerOnonDisconnect(int peerId)

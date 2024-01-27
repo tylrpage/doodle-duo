@@ -7,6 +7,7 @@ public class StateMachine
     private readonly Type[] StateTypes = new[]
     {
         typeof(WaitingState),
+        typeof(PlayingState),
     };
     
     public IState CurrentState { get; private set; }
