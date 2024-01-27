@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 using System.Linq;
 
 namespace ParrelSync
@@ -99,7 +101,7 @@ namespace ParrelSync
             name = pathArray.Last();
 
             pathArray.RemoveAt(pathArray.Count() - 1);
-            rootPath = string.Join(separator[0].ToString(), pathArray.ToArray());
+            rootPath = string.Join(separator[0].ToString(), pathArray);
 
             assetPath = projectPath + "/Assets";
             projectSettingsPath = projectPath + "/ProjectSettings";

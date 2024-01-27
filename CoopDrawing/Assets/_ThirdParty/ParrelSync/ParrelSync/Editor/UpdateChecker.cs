@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 namespace ParrelSync.Update
@@ -8,8 +10,7 @@ namespace ParrelSync.Update
     /// </summary>
     public class UpdateChecker
     {
-        //const string LocalVersionFilePath = "Assets/ParrelSync/VERSION.txt";
-        public const string LocalVersion = "1.5.2";
+        const string LocalVersionFilePath = "Assets/ParrelSync/VERSION.txt";
         [MenuItem("ParrelSync/Check for update", priority = 20)]
         static void CheckForUpdate()
         {
@@ -17,11 +18,8 @@ namespace ParrelSync.Update
             {
                 try
                 {
-                    //This won't work with UPM packages
-                    //string localVersionText = AssetDatabase.LoadAssetAtPath<TextAsset>(LocalVersionFilePath).text;
-
-                    string localVersionText = LocalVersion;
-                    Debug.Log("Local version text : " + LocalVersion);
+                    string localVersionText = AssetDatabase.LoadAssetAtPath<TextAsset>(LocalVersionFilePath).text;
+                    Debug.Log("Local version text : " + localVersionText);
 
                     string latesteVersionText = client.DownloadString(ExternalLinks.RemoteVersionURL);
                     Debug.Log("latest version text got: " + latesteVersionText);
@@ -50,7 +48,7 @@ namespace ParrelSync.Update
                 catch (Exception exp)
                 {
                     Debug.LogError("Error with checking update. Exception: " + exp);
-                    EditorUtility.DisplayDialog("Update Error","Error with checking update. \nSee console for more details.",
+                    EditorUtility.DisplayDialog("Update Error","Error with checking update. \nSee console fore more details.",
                      "OK"
                     );
                 }
