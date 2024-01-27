@@ -1,5 +1,5 @@
 ﻿using System;
-using Mirror.SimpleWeb;
+using JamesFrowen.SimpleWeb;
 using NetStack.Serialization;
 using UnityEngine;
 
@@ -17,8 +17,8 @@ public class Client : MonoBehaviour
     {
         _uiManager = GameManager.Instance.GetService<UIManager>();
         
-        TcpConfig tcpConfig = new TcpConfig(true, 5000, 20000);
-        _ws = SimpleWebClient.Create(16*1024, 1000, tcpConfig);
+        TcpConfig tcpConfig = new TcpConfig(false, 5000, 20000);
+        _ws = SimpleWebClient.Create(16*1024, 5000, tcpConfig);
         
         _ws.onData += WsOnonData;
         _ws.onDisconnect += WsOnonDisconnect;
@@ -28,7 +28,7 @@ public class Client : MonoBehaviour
 
     private void Update()
     {
-        _ws.ProcessMessageQueue(this);
+        _ws.ProcessMessageQueue();
     }
     
     private void OnDestroy()

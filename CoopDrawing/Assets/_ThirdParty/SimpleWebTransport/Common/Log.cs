@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using Conditional = System.Diagnostics.ConditionalAttribute;
 
-namespace Mirror.SimpleWeb
+namespace JamesFrowen.SimpleWeb
 {
     public static class Log
     {
@@ -33,7 +33,7 @@ namespace Mirror.SimpleWeb
             if (level < Levels.verbose)
                 return;
 
-            logger.Log(LogType.Log, $"VERBOSE: <color=blue>{label}: {BufferToString(buffer, offset, length)}</color>");
+            logger.Log(LogType.Log, $"VERBOSE: <color=cyan>{label}: {BufferToString(buffer, offset, length)}</color>");
         }
 
         [Conditional(SIMPLEWEB_LOG_ENABLED)]
@@ -42,7 +42,7 @@ namespace Mirror.SimpleWeb
             if (level < Levels.verbose)
                 return;
 
-            logger.Log(LogType.Log, $"VERBOSE: <color=blue>{label}: {BufferToString(arrayBuffer.array, 0, arrayBuffer.count)}</color>");
+            logger.Log(LogType.Log, $"VERBOSE: <color=cyan>{label}: {BufferToString(arrayBuffer.array, 0, arrayBuffer.count)}</color>");
         }
 
         [Conditional(SIMPLEWEB_LOG_ENABLED)]
@@ -52,7 +52,7 @@ namespace Mirror.SimpleWeb
                 return;
 
             if (showColor)
-                logger.Log(LogType.Log, $"VERBOSE: <color=blue>{msg}</color>");
+                logger.Log(LogType.Log, $"VERBOSE: <color=cyan>{msg}</color>");
             else
                 logger.Log(LogType.Log, $"VERBOSE: {msg}");
         }
@@ -64,7 +64,7 @@ namespace Mirror.SimpleWeb
                 return;
 
             if (showColor)
-                logger.Log(LogType.Log, $"INFO: <color=blue>{msg}</color>");
+                logger.Log(LogType.Log, $"INFO: <color=cyan>{msg}</color>");
             else
                 logger.Log(LogType.Log, $"INFO: {msg}");
         }
@@ -80,7 +80,7 @@ namespace Mirror.SimpleWeb
             if (level < Levels.info)
                 return;
 
-            logger.Log(LogType.Log, $"INFO_EXCEPTION: <color=blue>{e.GetType().Name}</color> Message: {e.Message}");
+            logger.Log(LogType.Log, $"INFO_EXCEPTION: <color=cyan>{e.GetType().Name}</color> Message: {e.Message}\n{e.StackTrace}\n\n");
         }
 
         [Conditional(SIMPLEWEB_LOG_ENABLED), Conditional(DEBUG)]
@@ -110,7 +110,7 @@ namespace Mirror.SimpleWeb
         public static void Exception(Exception e)
         {
             // always log Exceptions
-            logger.Log(LogType.Error, $"EXCEPTION: <color=red>{e.GetType().Name}</color> Message: {e.Message}");
+            logger.Log(LogType.Error, $"EXCEPTION: <color=red>{e.GetType().Name}</color> Message: {e.Message}\n{e.StackTrace}\n\n");
         }
     }
 }

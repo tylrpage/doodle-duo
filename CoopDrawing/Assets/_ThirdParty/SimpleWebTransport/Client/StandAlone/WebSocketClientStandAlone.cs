@@ -2,7 +2,7 @@ using System;
 using System.Net.Sockets;
 using System.Threading;
 
-namespace Mirror.SimpleWeb
+namespace JamesFrowen.SimpleWeb
 {
     public class WebSocketClientStandAlone : SimpleWebClient
     {
@@ -10,7 +10,6 @@ namespace Mirror.SimpleWeb
         readonly ClientHandshake handshake;
         readonly TcpConfig tcpConfig;
         Connection conn;
-
 
         internal WebSocketClientStandAlone(int maxMessageSize, int maxMessagesPerTick, TcpConfig tcpConfig) : base(maxMessageSize, maxMessagesPerTick)
         {
@@ -26,7 +25,15 @@ namespace Mirror.SimpleWeb
         public override void Connect(Uri serverAddress)
         {
             state = ClientState.Connecting;
-            Thread receiveThread = new Thread(() => ConnectAndReceiveLoop(serverAddress));
+
+            // create connection here before thread so that send queue exist before connected
+            var client = new TcpClient();
+            tcpConfig.ApplyTo(client);
+
+            // create connection object here so dispose correctly disconnects on failed connect
+            conn = new Connection(client, AfterConnectionDisposed);
+
+            var receiveThread = new Thread(() => ConnectAndReceiveLoop(serverAddress));
             receiveThread.IsBackground = true;
             receiveThread.Start();
         }
@@ -35,11 +42,8 @@ namespace Mirror.SimpleWeb
         {
             try
             {
-                TcpClient client = new TcpClient();
-                tcpConfig.ApplyTo(client);
-
-                // create connection object here so dispose correctly disconnects on failed connect
-                conn = new Connection(client, AfterConnectionDisposed);
+                // connection created above
+                TcpClient client = conn.client;
                 conn.receiveThread = Thread.CurrentThread;
 
                 try
@@ -75,9 +79,9 @@ namespace Mirror.SimpleWeb
 
                 receiveQueue.Enqueue(new Message(EventType.Connected));
 
-                Thread sendThread = new Thread(() =>
+                var sendThread = new Thread(() =>
                 {
-                    SendLoop.Config sendConfig = new SendLoop.Config(
+                    var sendConfig = new SendLoop.Config(
                         conn,
                         bufferSize: Constants.HeaderSize + Constants.MaskSize + maxMessageSize,
                         setMask: true);
@@ -89,7 +93,7 @@ namespace Mirror.SimpleWeb
                 sendThread.IsBackground = true;
                 sendThread.Start();
 
-                ReceiveLoop.Config config = new ReceiveLoop.Config(conn,
+                var config = new ReceiveLoop.Config(conn,
                     maxMessageSize,
                     false,
                     receiveQueue,
@@ -101,7 +105,7 @@ namespace Mirror.SimpleWeb
             catch (Exception e) { Log.Exception(e); }
             finally
             {
-                // close here incase connect fails
+                // close here in case connect fails
                 conn?.Dispose();
             }
         }

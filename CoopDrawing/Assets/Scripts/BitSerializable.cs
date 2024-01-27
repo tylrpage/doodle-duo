@@ -1,5 +1,4 @@
 using System;
-using Mirror.SimpleWeb;
 using NetStack.Serialization;
 
 public interface BitSerializable

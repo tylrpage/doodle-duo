@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Security.Authentication;
-using Mirror.SimpleWeb;
+using JamesFrowen.SimpleWeb;
 using UnityEngine;
 
 public class Server : MonoBehaviour
@@ -43,7 +43,7 @@ public class Server : MonoBehaviour
 
     void Update()
     {
-        _webServer.ProcessMessageQueue(this);
+        _webServer.ProcessMessageQueue();
     }
 
     private SimpleWebServer Listen()
@@ -51,7 +51,7 @@ public class Server : MonoBehaviour
         SimpleWebServer webServer;
         
         SslConfig sslConfig;
-        TcpConfig tcpConfig = new TcpConfig(true, 5000, 20000);
+        TcpConfig tcpConfig = new TcpConfig(false, 5000, 20000);
         if (Application.isBatchMode)
         {
             Debug.Log($"Setting up secure server");
@@ -63,7 +63,7 @@ public class Server : MonoBehaviour
             sslConfig = new SslConfig(false, "", "", SslProtocols.Tls12);
         }
 
-        webServer = new SimpleWebServer(10000, tcpConfig, 16 * 1024, 3000, sslConfig);
+        webServer = new SimpleWebServer(5000, tcpConfig, 16 * 1024, 3000, sslConfig);
         webServer.Start(Constants.GamePort);
 
         Debug.Log($"Server started, port: {Constants.GamePort}");

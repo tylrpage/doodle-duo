@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace Mirror.SimpleWeb
+namespace JamesFrowen.SimpleWeb
 {
     /// <summary>
     /// Constant values that should never change
@@ -30,6 +30,11 @@ namespace Mirror.SimpleWeb
         /// bytes for short length
         /// </summary>
         public const int ShortLength = 2;
+
+        /// <summary>
+        /// bytes for long length
+        /// </summary>
+        public const int LongLength = 8;
 
         /// <summary>
         /// Message mask is always 4 bytes

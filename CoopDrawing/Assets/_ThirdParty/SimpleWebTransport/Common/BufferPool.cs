@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
 
-namespace Mirror.SimpleWeb
+namespace JamesFrowen.SimpleWeb
 {
     public interface IBufferOwner
     {
@@ -18,9 +18,9 @@ namespace Mirror.SimpleWeb
         public readonly byte[] array;
 
         /// <summary>
-        /// number of bytes writen to buffer
+        /// number of bytes written to buffer
         /// </summary>
-        internal int count;
+        public int count { get; internal set; }
 
         /// <summary>
         /// How many times release needs to be called before buffer is returned to pool
@@ -52,7 +52,7 @@ namespace Mirror.SimpleWeb
             if (newValue <= 0)
             {
                 count = 0;
-                owner.Return(this);
+                owner?.Return(this);
             }
         }
         public void Dispose()
@@ -161,7 +161,7 @@ namespace Mirror.SimpleWeb
     /// <remarks>
     /// <para>
     /// Problem: <br/>
-    ///     * Need to cached byte[] so that new ones arn't created each time <br/>
+    ///     * Need to cached byte[] so that new ones aren't created each time <br/>
     ///     * Arrays sent are multiple different sizes <br/>
     ///     * Some message might be big so need buffers to cover that size <br/>
     ///     * Most messages will be small compared to max message size <br/>
@@ -182,8 +182,8 @@ namespace Mirror.SimpleWeb
 
         public BufferPool(int bucketCount, int smallest, int largest)
         {
-            if (bucketCount < 2) throw new ArgumentException("Count must be atleast 2");
-            if (smallest < 1) throw new ArgumentException("Smallest must be atleast 1");
+            if (bucketCount < 2) throw new ArgumentException("Count must be at least 2");
+            if (smallest < 1) throw new ArgumentException("Smallest must be at least 1");
             if (largest < smallest) throw new ArgumentException("Largest must be greater than smallest");
 
 
@@ -228,7 +228,7 @@ namespace Mirror.SimpleWeb
             // 3056      e^ (3 + 1.675 * 3)
             // 16,317    e^ (3 + 1.675 * 4)
 
-            // perceision wont be lose when using doubles
+            // precision wont be lose when using doubles
         }
 
         [Conditional("UNITY_ASSERTIONS")]

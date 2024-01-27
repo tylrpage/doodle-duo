@@ -3,7 +3,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Mirror.SimpleWeb
+namespace JamesFrowen.SimpleWeb
 {
     /// <summary>
     /// Handles Handshake to the server when it first connects
@@ -18,7 +18,7 @@ namespace Mirror.SimpleWeb
                 Stream stream = conn.stream;
 
                 byte[] keyBuffer = new byte[16];
-                using (RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider())
+                using (var rng = new RNGCryptoServiceProvider())
                 {
                     rng.GetBytes(keyBuffer);
                 }
@@ -32,7 +32,7 @@ namespace Mirror.SimpleWeb
 
                 string expectedResponse = Convert.ToBase64String(keySumHash);
                 string handshake =
-                    $"GET /chat HTTP/1.1\r\n" +
+                    $"GET {uri.PathAndQuery} HTTP/1.1\r\n" +
                     $"Host: {uri.Host}:{uri.Port}\r\n" +
                     $"Upgrade: websocket\r\n" +
                     $"Connection: Upgrade\r\n" +
@@ -55,7 +55,7 @@ namespace Mirror.SimpleWeb
                 string responseString = Encoding.ASCII.GetString(responseBuffer, 0, lengthOrNull.Value);
 
                 string acceptHeader = "Sec-WebSocket-Accept: ";
-                int startIndex = responseString.IndexOf(acceptHeader) + acceptHeader.Length;
+                int startIndex = responseString.IndexOf(acceptHeader, StringComparison.InvariantCultureIgnoreCase) + acceptHeader.Length;
                 int endIndex = responseString.IndexOf("\r\n", startIndex);
                 string responseKey = responseString.Substring(startIndex, endIndex - startIndex);
 

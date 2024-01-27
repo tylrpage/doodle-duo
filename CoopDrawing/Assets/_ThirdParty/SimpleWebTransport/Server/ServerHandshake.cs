@@ -3,7 +3,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Mirror.SimpleWeb
+namespace JamesFrowen.SimpleWeb
 {
     /// <summary>
     /// Handles Handshakes from new clients on the server
@@ -13,10 +13,10 @@ namespace Mirror.SimpleWeb
     {
         const int GetSize = 3;
         const int ResponseLength = 129;
-        const int KeyLength = 24;
+        internal const int KeyLength = 24;
         const int MergedKeyLength = 60;
-        const string KeyHeaderString = "Sec-WebSocket-Key: ";
-        // this isnt an offical max, just a reasonable size for a websocket handshake
+        const string KeyHeaderString = "\r\nSec-WebSocket-Key: ";
+        // this isn't an official max, just a reasonable size for a websocket handshake
         readonly int maxHttpHeaderSize = 3000;
 
         readonly SHA1 sha1 = SHA1.Create();
@@ -25,7 +25,7 @@ namespace Mirror.SimpleWeb
         public ServerHandshake(BufferPool bufferPool, int handshakeMaxSize)
         {
             this.bufferPool = bufferPool;
-            this.maxHttpHeaderSize = handshakeMaxSize;
+            maxHttpHeaderSize = handshakeMaxSize;
         }
 
         ~ServerHandshake()
@@ -41,8 +41,8 @@ namespace Mirror.SimpleWeb
             {
                 if (!ReadHelper.TryRead(stream, getHeader.array, 0, GetSize))
                     return false;
-                getHeader.count = GetSize;
 
+                getHeader.count = GetSize;
 
                 if (!IsGet(getHeader.array))
                 {
@@ -50,7 +50,6 @@ namespace Mirror.SimpleWeb
                     return false;
                 }
             }
-
 
             string msg = ReadToEndForHandshake(stream);
 
@@ -60,6 +59,10 @@ namespace Mirror.SimpleWeb
             try
             {
                 AcceptHandshake(stream, msg);
+
+                conn.request = new Request(msg);
+                conn.remoteAddress = conn.CalculateAddress();
+
                 return true;
             }
             catch (ArgumentException e)
@@ -97,7 +100,7 @@ namespace Mirror.SimpleWeb
         void AcceptHandshake(Stream stream, string msg)
         {
             using (
-                ArrayBuffer keyBuffer = bufferPool.Take(KeyLength),
+                ArrayBuffer keyBuffer = bufferPool.Take(KeyLength + Constants.HandshakeGUIDLength),
                             responseBuffer = bufferPool.Take(ResponseLength))
             {
                 GetKey(msg, keyBuffer.array);
@@ -109,10 +112,9 @@ namespace Mirror.SimpleWeb
             }
         }
 
-
-        static void GetKey(string msg, byte[] keyBuffer)
+        internal static void GetKey(string msg, byte[] keyBuffer)
         {
-            int start = msg.IndexOf(KeyHeaderString) + KeyHeaderString.Length;
+            int start = msg.IndexOf(KeyHeaderString, StringComparison.InvariantCultureIgnoreCase) + KeyHeaderString.Length;
 
             Log.Verbose($"Handshake Key: {msg.Substring(start, KeyLength)}");
             Encoding.ASCII.GetBytes(msg, start, KeyLength, keyBuffer, 0);
@@ -120,13 +122,12 @@ namespace Mirror.SimpleWeb
 
         static void AppendGuid(byte[] keyBuffer)
         {
-            Buffer.BlockCopy(Constants.HandshakeGUIDBytes, 0, keyBuffer, KeyLength, Constants.HandshakeGUID.Length);
+            Buffer.BlockCopy(Constants.HandshakeGUIDBytes, 0, keyBuffer, KeyLength, Constants.HandshakeGUIDLength);
         }
 
         byte[] CreateHash(byte[] keyBuffer)
         {
             Log.Verbose($"Handshake Hashing {Encoding.ASCII.GetString(keyBuffer, 0, MergedKeyLength)}");
-
             return sha1.ComputeHash(keyBuffer, 0, MergedKeyLength);
         }
 

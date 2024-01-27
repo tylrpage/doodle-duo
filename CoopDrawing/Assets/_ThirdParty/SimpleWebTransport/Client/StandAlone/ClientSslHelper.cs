@@ -4,7 +4,7 @@ using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
 
-namespace Mirror.SimpleWeb
+namespace JamesFrowen.SimpleWeb
 {
     internal class ClientSslHelper
     {
@@ -31,7 +31,7 @@ namespace Mirror.SimpleWeb
 
         Stream CreateStream(NetworkStream stream, Uri uri)
         {
-            SslStream sslStream = new SslStream(stream, true, ValidateServerCertificate);
+            var sslStream = new SslStream(stream, true, ValidateServerCertificate);
             sslStream.AuthenticateAsClient(uri.Host);
             return sslStream;
         }

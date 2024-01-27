@@ -4,7 +4,7 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
 
-namespace Mirror.SimpleWeb
+namespace JamesFrowen.SimpleWeb
 {
     public class WebSocketServer
     {
@@ -20,7 +20,6 @@ namespace Mirror.SimpleWeb
         readonly ServerSslHelper sslHelper;
         readonly BufferPool bufferPool;
         readonly ConcurrentDictionary<int, Connection> connections = new ConcurrentDictionary<int, Connection>();
-
 
         int _idCounter = 0;
 
@@ -54,14 +53,11 @@ namespace Mirror.SimpleWeb
             listener?.Stop();
             acceptThread = null;
 
-
-            Log.Info("Server stoped, Closing all connections...");
+            Log.Info("Server stopped, Closing all connections...");
             // make copy so that foreach doesn't break if values are removed
             Connection[] connectionsCopy = connections.Values.ToArray();
             foreach (Connection conn in connectionsCopy)
-            {
                 conn.Dispose();
-            }
 
             connections.Clear();
         }
@@ -77,15 +73,14 @@ namespace Mirror.SimpleWeb
                         TcpClient client = listener.AcceptTcpClient();
                         tcpConfig.ApplyTo(client);
 
-
                         // TODO keep track of connections before they are in connections dictionary
                         //      this might not be a problem as HandshakeAndReceiveLoop checks for stop
                         //      and returns/disposes before sending message to queue
-                        Connection conn = new Connection(client, AfterConnectionDisposed);
+                        var conn = new Connection(client, AfterConnectionDisposed);
                         Log.Info($"A client connected {conn}");
 
                         // handshake needs its own thread as it needs to wait for message from client
-                        Thread receiveThread = new Thread(() => HandshakeAndReceiveLoop(conn));
+                        var receiveThread = new Thread(() => HandshakeAndReceiveLoop(conn));
 
                         conn.receiveThread = receiveThread;
 
@@ -142,9 +137,9 @@ namespace Mirror.SimpleWeb
 
                 receiveQueue.Enqueue(new Message(conn.connId, EventType.Connected));
 
-                Thread sendThread = new Thread(() =>
+                var sendThread = new Thread(() =>
                 {
-                    SendLoop.Config sendConfig = new SendLoop.Config(
+                    var sendConfig = new SendLoop.Config(
                         conn,
                         bufferSize: Constants.HeaderSize + maxMessageSize,
                         setMask: false);
@@ -157,7 +152,7 @@ namespace Mirror.SimpleWeb
                 sendThread.Name = $"SendLoop {conn.connId}";
                 sendThread.Start();
 
-                ReceiveLoop.Config receiveConfig = new ReceiveLoop.Config(
+                var receiveConfig = new ReceiveLoop.Config(
                     conn,
                     maxMessageSize,
                     expectMask: true,
@@ -171,7 +166,7 @@ namespace Mirror.SimpleWeb
             catch (Exception e) { Log.Exception(e); }
             finally
             {
-                // close here incase connect fails
+                // close here in case connect fails
                 conn.Dispose();
             }
         }
@@ -216,15 +211,24 @@ namespace Mirror.SimpleWeb
 
         public string GetClientAddress(int id)
         {
-            if (connections.TryGetValue(id, out Connection conn))
+            if (!connections.TryGetValue(id, out Connection conn))
             {
-                return conn.client.Client.RemoteEndPoint.ToString();
-            }
-            else
-            {
-                Log.Error($"Cant close connection to {id} because connection was not found in dictionary");
+                Log.Error($"Cant get address of connection {id} because connection was not found in dictionary");
                 return null;
             }
+
+            return conn.remoteAddress;
+        }
+
+        public Request GetClientRequest(int id)
+        {
+            if (!connections.TryGetValue(id, out Connection conn))
+            {
+                Log.Error($"Cant get request of connection {id} because connection was not found in dictionary");
+                return null;
+            }
+
+            return conn.request;
         }
     }
 }
