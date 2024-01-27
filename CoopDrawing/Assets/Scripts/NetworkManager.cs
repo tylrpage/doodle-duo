@@ -1,7 +1,8 @@
-using System.Collections;
-using System.Collections.Generic;
-using ParrelSync;
 using UnityEngine;
+
+#if UNITY_EDITOR
+using ParrelSync;
+#endif
 
 public class NetworkManager : MonoBehaviour
 {
@@ -21,8 +22,15 @@ public class NetworkManager : MonoBehaviour
             client.Connect(connectToRemote);
         }
 #else
-        Client client = gameObject.AddComponent<Client>();
-        client.Connect(connectToRemote);
+        if (Application.isBatchMode)
+        {
+            gameObject.AddComponent<Server>();
+        }
+        else
+        {
+            Client client = gameObject.AddComponent<Client>();
+            client.Connect(true);
+        }
 #endif
     }
 }

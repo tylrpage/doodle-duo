@@ -22,6 +22,11 @@ public class Server : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (_listening)
+        {
+            _webServer.Stop();
+        }
+        
         _webServer.onConnect -= WebServerOnonConnect;
         _webServer.onData -= WebServerOnonData;
         _webServer.onError -= WsOnonError;
@@ -55,16 +60,20 @@ public class Server : MonoBehaviour
 
         Debug.Log($"Server started, port: {Constants.GamePort}");
         _listening = true;
+        
+        GameManager.Instance.UIManager.SetStatusText("Listening...");
 
         return webServer;
     }
     
     private void WebServerOnonConnect(int peerId)
     {
+        Debug.Log($"Client connected, id: {peerId}");
     }
 
-    private void WebServerOnonDisconnect(int id)
+    private void WebServerOnonDisconnect(int peerId)
     {
+        Debug.Log($"Client disconnected, id: {peerId}");
     }
 
     private void WebServerOnonData(int peerId, ArraySegment<byte> data)

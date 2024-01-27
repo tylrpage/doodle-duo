@@ -43,6 +43,9 @@ public class Client : MonoBehaviour
     {
         _connected = true;
         Debug.Log("Connected!");
+        
+        GameManager.Instance.UIManager.SetStatusText("Connected!");
+        
         Connected?.Invoke();
     }
     
@@ -87,5 +90,7 @@ public class Client : MonoBehaviour
         
         Debug.Log("Connecting to " + uriBuilder.Uri);
         _ws.Connect(uriBuilder.Uri);
+        
+        GameManager.Instance.UIManager.SetStatusText("Connecting...");
     }
 }
