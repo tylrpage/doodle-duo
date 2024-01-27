@@ -7,9 +7,12 @@ public class Server : MonoBehaviour
 {
     private SimpleWebServer _webServer;
     private bool _listening;
+    private UIManager _uiManager;
 
     private void Awake()
     {
+        _uiManager = GameManager.Instance.GetService<UIManager>();
+        
         Application.targetFrameRate = Constants.Tick;
         
         _webServer = Listen();
@@ -61,7 +64,7 @@ public class Server : MonoBehaviour
         Debug.Log($"Server started, port: {Constants.GamePort}");
         _listening = true;
         
-        GameManager.Instance.UIManager.SetStatusText("Listening...");
+        _uiManager.SetStatusText("Listening...");
 
         return webServer;
     }

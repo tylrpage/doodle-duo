@@ -1,5 +1,6 @@
 ﻿using System;
 using Mirror.SimpleWeb;
+using NetStack.Serialization;
 using UnityEngine;
 
 public class Client : MonoBehaviour
@@ -7,11 +8,15 @@ public class Client : MonoBehaviour
     public event Action Connected;
     public event Action Disconnected;
     
+    private UIManager _uiManager;
     private SimpleWebClient _ws;
     private bool _connected;
+    private StateMachine _stateMachine = new StateMachine();
 
     private void Awake()
     {
+        _uiManager = GameManager.Instance.GetService<UIManager>();
+        
         TcpConfig tcpConfig = new TcpConfig(true, 5000, 20000);
         _ws = SimpleWebClient.Create(16*1024, 1000, tcpConfig);
         
@@ -44,7 +49,7 @@ public class Client : MonoBehaviour
         _connected = true;
         Debug.Log("Connected!");
         
-        GameManager.Instance.UIManager.SetStatusText("Connected!");
+        _uiManager.SetStatusText("Connected!");
         
         Connected?.Invoke();
     }
@@ -58,6 +63,18 @@ public class Client : MonoBehaviour
 
     private void WsOnonData(ArraySegment<byte> data)
     {
+        BitBuffer bitBuffer = BufferPool.GetBitBuffer();
+        bitBuffer.FromArray(data.Array, data.Count);
+        ushort messageId = bitBuffer.PeekUShort();
+
+        switch (messageId)
+        {
+            case StateChange.Id:
+                StateChange stateChange = new StateChange();
+                stateChange.Deserialize(ref bitBuffer);
+                _stateMachine.SetStateId(stateChange.StateId);
+                break;
+        }
     }
     
     private void WsOnonError(Exception exception)
@@ -91,6 +108,6 @@ public class Client : MonoBehaviour
         Debug.Log("Connecting to " + uriBuilder.Uri);
         _ws.Connect(uriBuilder.Uri);
         
-        GameManager.Instance.UIManager.SetStatusText("Connecting...");
+        _uiManager.SetStatusText("Connecting...");
     }
 }
