@@ -550,7 +550,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bf73ffb27e8d575448cec4d362b92bdf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <UIManager>k__BackingField: {fileID: 505363267}
 --- !u!4 &2042559158
 Transform:
   m_ObjectHideFlags: 0
@@ -577,4 +576,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dfd238e195d35594e9893974a2527142, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  nonCloneIsServer: 0
   connectToRemote: 0

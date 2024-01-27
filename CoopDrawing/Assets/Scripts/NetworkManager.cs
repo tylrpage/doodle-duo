@@ -6,6 +6,7 @@ using ParrelSync;
 
 public class NetworkManager : MonoBehaviour, IService
 {
+    [SerializeField] private bool nonCloneIsServer;
     [SerializeField] private bool connectToRemote;
     
     public bool IsServer { get; private set; }
@@ -18,17 +19,25 @@ public class NetworkManager : MonoBehaviour, IService
     void Start()
     {
 #if UNITY_EDITOR
-        string arg = ClonesManager.GetArgument();
-        if (arg.Equals("server"))
+        if (!ClonesManager.IsClone() && nonCloneIsServer)
         {
             IsServer = true;
             gameObject.AddComponent<Server>();
         }
         else
         {
-            IsServer = false;
-            Client client = gameObject.AddComponent<Client>();
-            client.Connect(connectToRemote);
+            string arg = ClonesManager.GetArgument();
+            if (arg.Equals("server"))
+            {
+                IsServer = true;
+                gameObject.AddComponent<Server>();
+            }
+            else
+            {
+                IsServer = false;
+                Client client = gameObject.AddComponent<Client>();
+                client.Connect(connectToRemote);
+            }
         }
 #else
         if (Application.isBatchMode)

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Security.Authentication;
 using Mirror.SimpleWeb;
 using UnityEngine;
@@ -8,6 +9,8 @@ public class Server : MonoBehaviour
     private SimpleWebServer _webServer;
     private bool _listening;
     private UIManager _uiManager;
+    private List<int> _connectedPeers = new List<int>();
+    private StateMachine _stateMachine = new StateMachine();
 
     private void Awake()
     {
@@ -21,6 +24,8 @@ public class Server : MonoBehaviour
         _webServer.onData += WebServerOnonData;
         _webServer.onError += WsOnonError;
         _webServer.onDisconnect += WebServerOnonDisconnect;
+        
+        _stateMachine.SetState<WaitingState>();
     }
 
     private void OnDestroy()
@@ -72,11 +77,29 @@ public class Server : MonoBehaviour
     private void WebServerOnonConnect(int peerId)
     {
         Debug.Log($"Client connected, id: {peerId}");
+        
+        _connectedPeers.Add(peerId);
+
+        if (_stateMachine.CurrentState.GetType() == typeof(WaitingState) && _connectedPeers.Count >= 2)
+        {
+            // Begin game
+            _stateMachine.SetState<PlayingState>();
+        }
+        
+        // Send current state to client
+        StateChange stateChange = new StateChange()
+        {
+            StateId = _stateMachine.GetStateId(_stateMachine.CurrentState),
+        };
+        ArraySegment<byte> bytes = Writer.SerializeToByteSegment(stateChange);
+        _webServer.SendOne(peerId, bytes);
     }
 
     private void WebServerOnonDisconnect(int peerId)
     {
         Debug.Log($"Client disconnected, id: {peerId}");
+        
+        _connectedPeers.Remove(peerId);
     }
 
     private void WebServerOnonData(int peerId, ArraySegment<byte> data)

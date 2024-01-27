@@ -2,6 +2,6 @@ public class WaitingState : IState
 {
     public void Enter()
     {
-        throw new System.NotImplementedException();
+        GameManager.Instance.GetService<UIManager>().SetStatusText("Waiting...");
     }
 }
