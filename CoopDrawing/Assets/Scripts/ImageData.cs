@@ -3,12 +3,19 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 
+// Handles the processing of the pixel data that represents the target image. Also handles the loading
+// of the images.
 public class ImageData : MonoBehaviour
 {
+    // Width of original image in pixels
     [HideInInspector] public int width;
+    // Height of original image in pixels.
     [HideInInspector] public int height;
+    // pixelData represents the target outline. True values represent pixels that are within the outline.
     public bool[,] pixelData;
+    // Reference image from which pixelData is generated.
     [HideInInspector] public Texture2D outlineImage;
+    // The final image to show once the players complete their drawing!
     [HideInInspector] public Texture2D finalImage;
 
     private bool[,] expandKernel = new bool[,] {
@@ -53,6 +60,9 @@ public class ImageData : MonoBehaviour
         return processedPixels;
     }
 
+    // Modifies processedPixels to include the given pixel and its neighbors as defined by expandKernel.
+    // The center of the expandKernel is the pixel at (x, y), and the true values in the kernel are the
+    // pixels that will be included in the target outline.
     private void ExpandAroundPixel(bool[,] processedPixels, int x, int y) {
         for (int i = -expandKernel.GetLength(0) / 2; i <= expandKernel.GetLength(0) / 2; i++) {
             for (int j = -expandKernel.GetLength(1) / 2; j <= expandKernel.GetLength(1) / 2; j++) {
@@ -63,5 +73,21 @@ public class ImageData : MonoBehaviour
                 }
             }
         }
+    }
+
+    // Returns true if the pixel at the given coordinates is within the target outline
+    public bool IsPixelOnTarget(int x, int y) {
+        if (!(x >= 0 && x < width && y >= 0 && y < height)) {
+            return false;
+        }
+        return pixelData[x, y];
+    }
+
+    // Returns the x and y coordinates of the pixel nearest to the given percentages,
+    // where (0%, 0%) is the bottom left and (100%, 100%) is the top right.
+    public (int x, int y) GetNearestPixel(float xPercent, float yPercent) {
+        int x = Mathf.RoundToInt(xPercent * width);
+        int y = Mathf.RoundToInt(yPercent * height);
+        return (x, y);
     }
 }
