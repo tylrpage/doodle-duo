@@ -24,7 +24,7 @@ public class ImageData : MonoBehaviour
     public Vector2 EndPositionPercentage;
 
     void Awake() {
-        expandKernel = GenerateKernel(31);
+        expandKernel = GenerateKernel(15);
     }
 
     // Loads the images from their paths
