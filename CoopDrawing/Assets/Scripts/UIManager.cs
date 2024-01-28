@@ -21,6 +21,7 @@ public class UIManager : MonoBehaviour, IService
     [SerializeField] private TMP_Text waitingText;
     [SerializeField] private TMP_Text restartingText;
     [SerializeField] private TMP_Text connectingText;
+    [SerializeField] private TMP_Text winnerText;
 
     private DrawingManager _drawingManager;
     private StateManager _stateManager;
@@ -141,6 +142,7 @@ public class UIManager : MonoBehaviour, IService
                 timerText.gameObject.SetActive(false);
                 waitingText.gameObject.SetActive(true);
                 restartingText.gameObject.SetActive(false);
+                winnerText.gameObject.SetActive(false);
                 break;
             case StateManager.State.CountIn:
                 dot.gameObject.SetActive(false);
@@ -151,6 +153,7 @@ public class UIManager : MonoBehaviour, IService
                 timerText.text = "Get Ready...";
                 waitingText.gameObject.SetActive(false);
                 restartingText.gameObject.SetActive(false);
+                winnerText.gameObject.SetActive(false);
                 
                 // Hide knob colors until playing
                 horizontalKnob.SetAssigned(false);
@@ -174,6 +177,9 @@ public class UIManager : MonoBehaviour, IService
                 waitingText.gameObject.SetActive(false);
                 timerText.color = timerNormalColor;
                 timerText.text = "Time's Up!";
+                break;
+            case StateManager.State.Won:
+                winnerText.gameObject.SetActive(true);
                 break;
         }
     }

@@ -16,6 +16,7 @@ public class StateManager : MonoBehaviour, IService
         Playing,
         Ending, // End of level sequence
         Restarting,
+        Won,
     }
     
     public State CurrentState { get; private set; }
@@ -24,6 +25,7 @@ public class StateManager : MonoBehaviour, IService
     [field: SerializeField] public float BaseTimeLimit { get; private set; } // determined by music duration
     [SerializeField] private float countInDuration;
     [SerializeField] private float restartingDuration;
+    [SerializeField] private float endDurationBeforeWin;
     private NetworkManager _networkManager;
     private ImageManager _imageManager;
 
@@ -113,14 +115,30 @@ public class StateManager : MonoBehaviour, IService
             case State.Ending:
                 if (_networkManager.IsServer)
                 {
-                    // Give time to see the final image, then move onto the next image
-                    StartCoroutine(ServerWaitAndChangeStateCoroutine(State.CountIn, EndPictureDuration));
+                    // Check for being at the last image
+                    if (_imageManager.CurrentImageIndex == _imageManager.levels.Length - 1)
+                    {
+                        // They won!
+                        StartCoroutine(ServerWaitAndChangeStateCoroutine(State.Won, endDurationBeforeWin));
+                    }
+                    else
+                    {
+                        // Give time to see the final image, then move onto the next image
+                        StartCoroutine(ServerWaitAndChangeStateCoroutine(State.CountIn, EndPictureDuration));
+                    }
                 }
                 break;
             case State.Restarting:
                 if (_networkManager.IsServer)
                 {
                     StartCoroutine(RestartCoroutine());
+                }
+
+                break;
+            case State.Won:
+                if (_networkManager.IsServer)
+                {
+                    StartCoroutine(ServerWaitAndChangeStateCoroutine(State.CountIn, EndPictureDuration));
                 }
 
                 break;
