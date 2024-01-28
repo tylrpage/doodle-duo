@@ -89,6 +89,10 @@ public class Client : MonoBehaviour
                 message = new ServerChangeImageMessage();
                 message.Deserialize(ref bitBuffer);
                 break;
+            case ServerRoleAssignmentMessage.Id:
+                message = new ServerRoleAssignmentMessage();
+                message.Deserialize(ref bitBuffer);
+                break;
             default:
                 Debug.LogError($"Received a message with an unknown id: {messageId}");
                 break;

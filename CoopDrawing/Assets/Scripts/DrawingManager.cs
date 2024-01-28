@@ -17,6 +17,7 @@ public class DrawingManager : MonoBehaviour, IService
     private float _clientTimeSinceSentInput;
     private bool _dotMovedSinceUpdate;
     private bool _resetNextUpdate;
+    private ServerRoleAssignmentMessage.Role _currentRole; // Client only
     
     private void Awake()
     {
@@ -57,6 +58,9 @@ public class DrawingManager : MonoBehaviour, IService
                     DotMoved?.Invoke(DotPosition);
                 }
                 break;
+            case ServerRoleAssignmentMessage roleAssignmentMessage:
+                _currentRole = roleAssignmentMessage.CurrentRole;
+                break;
         }
     }
 
@@ -85,7 +89,10 @@ public class DrawingManager : MonoBehaviour, IService
             
             // Collect input
             _clientTimeSinceSentInput += Time.deltaTime;
-            _clientUnsentInputTotal += new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical")) 
+            // Restrict inputs to our role
+            _clientUnsentInputTotal += new Vector2(
+                                           Input.GetAxis("Horizontal") * (_currentRole == ServerRoleAssignmentMessage.Role.Horizontal ? 1 : 0), 
+                                           Input.GetAxis("Vertical") * (_currentRole == ServerRoleAssignmentMessage.Role.Vertical ? 1 : 0))
                                        * (dotSpeed * Time.deltaTime);
             
             if (_clientTimeSinceSentInput > Constants.Step)

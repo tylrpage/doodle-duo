@@ -9,6 +9,14 @@ public struct ServerGameStateMessage : BitSerializable
     public Vector2 DotPosition;
     public bool DoReset;
 
+    public enum Role
+    {
+        None,
+        Horizontal,
+        Vertical,
+    }
+    public Role CurrentRole;
+
     public void Serialize(ref BitBuffer data)
     {
         data.AddUShort(Id);

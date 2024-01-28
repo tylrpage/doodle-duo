@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Authentication;
 using JamesFrowen.SimpleWeb;
 using NetStack.Serialization;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class Server : MonoBehaviour
 {
@@ -94,6 +96,7 @@ public class Server : MonoBehaviour
         {
             // Begin game
             _stateManager.ChangeState(StateManager.State.Playing);
+            
             // Tell all clients about the new state
             SendAll(new ServerStateChangeMessage()
             {
@@ -106,16 +109,28 @@ public class Server : MonoBehaviour
             {
                 ImageIndex = _imageManager.CurrentImageIndex,
             });
+            
+            // Assign roles randomly
+            int horizontalPeerId = _connectedPeers[Random.Range(0, _connectedPeers.Count)];
+            Send(horizontalPeerId, new ServerRoleAssignmentMessage()
+            {
+                CurrentRole = ServerRoleAssignmentMessage.Role.Horizontal,
+            });
+            
+            List<int> availablePeers = _connectedPeers.Where(x => x != horizontalPeerId).ToList();
+            int verticalPeerId = _connectedPeers[Random.Range(0, availablePeers.Count)];
+            Send(verticalPeerId, new ServerRoleAssignmentMessage()
+            {
+                CurrentRole = ServerRoleAssignmentMessage.Role.Vertical,
+            });
         }
         else
         {
             // Send current state to connecting client
-            ServerStateChangeMessage stateChangeMessage = new ServerStateChangeMessage()
+            Send(peerId, new ServerStateChangeMessage()
             {
                 StateId = (short)_stateManager.CurrentState,
-            };
-            ArraySegment<byte> bytes = Writer.SerializeToByteSegment(stateChangeMessage);
-            _webServer.SendOne(peerId, bytes);   
+            });
         }
     }
 
