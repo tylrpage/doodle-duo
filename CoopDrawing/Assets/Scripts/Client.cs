@@ -7,11 +7,12 @@ public class Client : MonoBehaviour
 {
     public event Action Connected;
     public event Action Disconnected;
+    public event Action<BitSerializable> MessageReceived;
     
     private UIManager _uiManager;
     private SimpleWebClient _ws;
     private bool _connected;
-    private StateMachine _stateMachine = new StateMachine();
+    private StateMachine _stateMachine;
 
     private void Awake()
     {
@@ -19,6 +20,8 @@ public class Client : MonoBehaviour
         
         TcpConfig tcpConfig = new TcpConfig(false, 5000, 20000);
         _ws = SimpleWebClient.Create(16*1024, 5000, tcpConfig);
+
+        _stateMachine = new StateMachine(this);
         
         _ws.onData += WsOnonData;
         _ws.onDisconnect += WsOnonDisconnect;
@@ -66,14 +69,27 @@ public class Client : MonoBehaviour
         BitBuffer bitBuffer = BufferPool.GetBitBuffer();
         bitBuffer.FromArray(data.Array, data.Count);
         ushort messageId = bitBuffer.PeekUShort();
-
+        
+        BitSerializable message = null;
+        // todo: get rid of this boilerplate somehow
         switch (messageId)
         {
-            case StateChange.Id:
-                StateChange stateChange = new StateChange();
-                stateChange.Deserialize(ref bitBuffer);
-                _stateMachine.SetStateId(stateChange.StateId);
+            case StateChangeMessage.Id:
+                message = new StateChangeMessage();
+                message.Deserialize(ref bitBuffer);
                 break;
+            case GameStateMessage.Id:
+                message = new GameStateMessage();
+                message.Deserialize(ref bitBuffer);
+                break;
+            default:
+                Debug.LogError($"Received a message with an unknown id: {messageId}");
+                break;
+        }
+        
+        if (message != null)
+        {
+            MessageReceived?.Invoke(message);
         }
     }
     
@@ -109,5 +125,11 @@ public class Client : MonoBehaviour
         _ws.Connect(uriBuilder.Uri);
         
         _uiManager.SetStatusText("Connecting...");
+    }
+
+    public void Send(BitSerializable serializable)
+    {
+        ArraySegment<byte> bytes = Writer.SerializeToByteSegment(serializable);
+        _ws.Send(bytes);
     }
 }

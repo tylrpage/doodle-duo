@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using NetStack.Serialization;
 using UnityEngine;
 
-public struct StateChange : BitSerializable
+public struct StateChangeMessage : BitSerializable
 {
     public const ushort Id = 1;
 

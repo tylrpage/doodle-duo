@@ -2,21 +2,25 @@
 using System.Collections.Generic;
 using System.Security.Authentication;
 using JamesFrowen.SimpleWeb;
+using NetStack.Serialization;
 using UnityEngine;
 
 public class Server : MonoBehaviour
 {
+    public event Action<BitSerializable> MessageReceived;
+    
     private SimpleWebServer _webServer;
     private bool _listening;
     private UIManager _uiManager;
     private List<int> _connectedPeers = new List<int>();
-    private StateMachine _stateMachine = new StateMachine();
+    private StateMachine _stateMachine;
 
     private void Awake()
     {
-        _uiManager = GameManager.Instance.GetService<UIManager>();
-        
         Application.targetFrameRate = Constants.Tick;
+        
+        _uiManager = GameManager.Instance.GetService<UIManager>();
+        _stateMachine = new StateMachine(this);
         
         _webServer = Listen();
         
@@ -85,21 +89,21 @@ public class Server : MonoBehaviour
             // Begin game
             _stateMachine.SetState<PlayingState>();
             // Tell all clients about the new state
-            StateChange stateChange = new StateChange()
+            StateChangeMessage stateChangeMessage = new StateChangeMessage()
             {
                 StateId = _stateMachine.GetStateId(_stateMachine.CurrentState),
             };
-            ArraySegment<byte> bytes = Writer.SerializeToByteSegment(stateChange);
+            ArraySegment<byte> bytes = Writer.SerializeToByteSegment(stateChangeMessage);
             _webServer.SendAll(_connectedPeers, bytes);
         }
         else
         {
             // Send current state to connecting client
-            StateChange stateChange = new StateChange()
+            StateChangeMessage stateChangeMessage = new StateChangeMessage()
             {
                 StateId = _stateMachine.GetStateId(_stateMachine.CurrentState),
             };
-            ArraySegment<byte> bytes = Writer.SerializeToByteSegment(stateChange);
+            ArraySegment<byte> bytes = Writer.SerializeToByteSegment(stateChangeMessage);
             _webServer.SendOne(peerId, bytes);   
         }
     }
@@ -113,10 +117,43 @@ public class Server : MonoBehaviour
 
     private void WebServerOnonData(int peerId, ArraySegment<byte> data)
     {
+        BitBuffer bitBuffer = BufferPool.GetBitBuffer();
+        bitBuffer.FromArray(data.Array, data.Count);
+        ushort messageId = bitBuffer.PeekUShort();
+
+        BitSerializable message = null;
+        // todo: get rid of this boilerplate somehow
+        switch (messageId)
+        {
+            case InputMessage.Id:
+                message = new InputMessage();
+                message.Deserialize(ref bitBuffer);
+                break;
+            default:
+                Debug.LogError($"Received a message with an unknown id: {messageId}");
+                break;
+        }
+
+        if (message != null)
+        {
+            MessageReceived?.Invoke(message);
+        }
     }
     
     private void WsOnonError(int connectionId, Exception exception)
     {
         Debug.LogError($"Web Server Error, Id: {connectionId}, {exception.Message}");
+    }
+    
+    public void SendAll(BitSerializable serializable)
+    {
+        ArraySegment<byte> bytes = Writer.SerializeToByteSegment(serializable);
+        _webServer.SendAll(_connectedPeers, bytes);
+    }
+    
+    public void Send(int peerId, BitSerializable serializable)
+    {
+        ArraySegment<byte> bytes = Writer.SerializeToByteSegment(serializable);
+        _webServer.SendOne(peerId, bytes);
     }
 }

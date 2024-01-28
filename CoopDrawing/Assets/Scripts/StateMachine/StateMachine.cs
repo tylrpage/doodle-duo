@@ -15,13 +15,35 @@ public class StateMachine
     private Dictionary<short, Type> _idToState = new Dictionary<short, Type>();
     private Dictionary<Type, short> _stateToId = new Dictionary<Type, short>();
 
-    public StateMachine()
+    public StateMachine(Client client)
+    {
+        CacheStates();
+        client.MessageReceived += OnMessageReceived;
+    }
+
+    public StateMachine(Server server)
+    {
+        CacheStates();
+        server.MessageReceived += OnMessageReceived;
+    }
+
+    private void CacheStates()
     {
         // Cache state <-> id
         for (short i = 0; i < StateTypes.Length; i++)
         {
             _idToState[i] = StateTypes[i];
             _stateToId[StateTypes[i]] = i;
+        }
+    }
+    
+    private void OnMessageReceived(BitSerializable message)
+    {
+        switch (message)
+        {
+            case StateChangeMessage stateChangeMessage:
+                SetStateId(stateChangeMessage.StateId);
+                break;
         }
     }
     

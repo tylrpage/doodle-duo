@@ -10,6 +10,8 @@ public class NetworkManager : MonoBehaviour, IService
     [SerializeField] private bool connectToRemote;
     
     public bool IsServer { get; private set; }
+    public Client Client { get; private set; }
+    public Server Server { get; private set; }
     
     private void Awake()
     {
@@ -21,36 +23,42 @@ public class NetworkManager : MonoBehaviour, IService
 #if UNITY_EDITOR
         if (!ClonesManager.IsClone() && nonCloneIsServer)
         {
-            IsServer = true;
-            gameObject.AddComponent<Server>();
+            StartServer();
         }
         else
         {
             string arg = ClonesManager.GetArgument();
             if (arg.Equals("server"))
             {
-                IsServer = true;
-                gameObject.AddComponent<Server>();
+                StartServer();
             }
             else
             {
-                IsServer = false;
-                Client client = gameObject.AddComponent<Client>();
-                client.Connect(connectToRemote);
+                StartClient();
             }
         }
 #else
         if (Application.isBatchMode)
         {
-            IsServer = true;
-            gameObject.AddComponent<Server>();
+            StartServer();
         }
         else
         {
-            IsServer = false;
-            Client client = gameObject.AddComponent<Client>();
-            client.Connect(true);
+            StartClient();
         }
 #endif
+    }
+
+    private void StartClient()
+    {
+        IsServer = false;
+        Client = gameObject.AddComponent<Client>();
+        Client.Connect(connectToRemote);
+    }
+
+    private void StartServer()
+    {
+        IsServer = true;
+        Server = gameObject.AddComponent<Server>();
     }
 }
