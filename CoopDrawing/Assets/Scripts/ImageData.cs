@@ -17,24 +17,15 @@ public class ImageData : MonoBehaviour
     [HideInInspector] public Texture2D outlineImage;
     // The final image to show once the players complete their drawing!
     [HideInInspector] public Texture2D finalImage;
+    private bool[,] expandKernel;
+    // The position of dot in the target image, as a percentage of the image's width and height.
+    public Vector2 StartPositionPercentage;
+    // The position of the red dot in the target image, as a percentage of the image's width and height.
+    public Vector2 EndPositionPercentage;
 
-    private bool[,] expandKernel = new bool[,] {
-        {true, true, true, true, true, true, true, true, true, true, true, true, true, true},
-        {true, true, true, true, true, true, true, true, true, true, true, true, true, true},
-        {true, true, true, true, true, true, true, true, true, true, true, true, true, true},
-        {true, true, true, true, true, true, true, true, true, true, true, true, true, true},
-        {true, true, true, true, true, true, true, true, true, true, true, true, true, true},
-        {true, true, true, true, true, true, true, true, true, true, true, true, true, true},
-        {true, true, true, true, true, true, true, true, true, true, true, true, true, true},
-        {true, true, true, true, true, true, true, true, true, true, true, true, true, true},
-        {true, true, true, true, true, true, true, true, true, true, true, true, true, true},
-        {true, true, true, true, true, true, true, true, true, true, true, true, true, true},
-        {true, true, true, true, true, true, true, true, true, true, true, true, true, true},
-        {true, true, true, true, true, true, true, true, true, true, true, true, true, true},
-        {true, true, true, true, true, true, true, true, true, true, true, true, true, true},
-        {true, true, true, true, true, true, true, true, true, true, true, true, true, true},
-        {true, true, true, true, true, true, true, true, true, true, true, true, true, true},
-    };
+    void Awake() {
+        expandKernel = GenerateKernel(31);
+    }
 
     // Loads the images from their paths
     public void SetNewImage(string pathToOutline, string pathToFinal) {
@@ -51,10 +42,17 @@ public class ImageData : MonoBehaviour
         Color[] pixels = image.GetPixels();
         for (int i = 0; i < pixels.Length; i++) {
             Color pixel = pixels[i];
+            int x = i % width;
+            int y = i / width;
             if (pixel.a > 0.5f) {
-                int x = i % width;
-                int y = i / width;
                 ExpandAroundPixel(processedPixels, x, y);
+            }
+            if (pixel.g == 1f) {
+                StartPositionPercentage = new Vector2((float)x / width, (float)y / height);
+            }
+            if (pixel.b == 1f) {
+                EndPositionPercentage = new Vector2((float)x / width, (float)y / height);
+
             }
         }
         return processedPixels;
@@ -89,5 +87,32 @@ public class ImageData : MonoBehaviour
         int x = Mathf.RoundToInt(xPercent * width);
         int y = Mathf.RoundToInt(yPercent * height);
         return (x, y);
+    }
+
+    // Creates a new kernel: A filled circle within a |size| x |size| grid.
+    private bool[,] GenerateKernel(int size) {
+        bool[,] kernel = new bool[size, size];
+        float radius = size / 2.0f;
+        Vector2 center = new Vector2(size / 2, size / 2);
+        for (int i = 0; i < kernel.GetLength(0); i++) {
+            for (int j = 0; j < kernel.GetLength(1); j++) {
+                Vector2 point = new Vector2(i, j);
+                float distance = Vector2.Distance(point, center);
+                kernel[i, j] = distance <= radius;
+            }
+        }
+        return kernel;
+    }
+
+    // Debugging method, prints kernel to console.
+    private void PrintKernel(bool[,] kernel) {
+        string output = "";
+        for (int i = 0; i < kernel.GetLength(0); i++) {
+            for (int j = 0; j < kernel.GetLength(1); j++) {
+                output += kernel[i, j] ? "1" : "0";
+            }
+            output += "\n";
+        }
+        Debug.Log(output);
     }
 }

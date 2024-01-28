@@ -8,7 +8,7 @@ public class ImageController : MonoBehaviour
     [SerializeField] private ImageViewer imageViewer;
 
     void Start() {
-        SetNewImage("Henry2");
+        SetNewImage("Henry");
     }
 
     void SetNewImage(string imageName) {
