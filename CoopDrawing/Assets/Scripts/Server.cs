@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Security.Authentication;
 using JamesFrowen.SimpleWeb;
 using NetStack.Serialization;
 using UnityEngine;
-using Random = UnityEngine.Random;
 
 public class Server : MonoBehaviour
 {
@@ -14,7 +12,7 @@ public class Server : MonoBehaviour
     private SimpleWebServer _webServer;
     private bool _listening;
     private UIManager _uiManager;
-    private List<int> _connectedPeers = new List<int>();
+    public List<int> ConnectedPeers { get; private set; } = new List<int>();
     private StateManager _stateManager;
     private ImageManager _imageManager;
 
@@ -35,7 +33,7 @@ public class Server : MonoBehaviour
     private void Start()
     {
         _stateManager = GameManager.Instance.GetService<StateManager>();
-        _stateManager.ChangeState(StateManager.State.Waiting);
+        _stateManager.ChangeServerState(StateManager.State.Waiting);
         
         _imageManager = GameManager.Instance.GetService<ImageManager>();
     }
@@ -90,42 +88,16 @@ public class Server : MonoBehaviour
     {
         Debug.Log($"Client connected, id: {peerId}");
         
-        _connectedPeers.Add(peerId);
+        ConnectedPeers.Add(peerId);
 
-        if (_stateManager.CurrentState == StateManager.State.Waiting && _connectedPeers.Count >= 2)
+        if (_stateManager.CurrentState == StateManager.State.Waiting && ConnectedPeers.Count >= 2)
         {
             // Begin game
-            _stateManager.ChangeState(StateManager.State.Playing);
-            
-            // Tell all clients about the new state
-            SendAll(new ServerStateChangeMessage()
-            {
-                StateId = (short)_stateManager.CurrentState,
-            });
-            
-            // Get the first image
-            _imageManager.GetNextImage();
-            SendAll(new ServerChangeImageMessage()
-            {
-                ImageIndex = _imageManager.CurrentImageIndex,
-            });
-            
-            // Assign roles randomly
-            int horizontalPeerId = _connectedPeers[Random.Range(0, _connectedPeers.Count)];
-            Send(horizontalPeerId, new ServerRoleAssignmentMessage()
-            {
-                CurrentRole = ServerRoleAssignmentMessage.Role.Horizontal,
-            });
-            
-            List<int> availablePeers = _connectedPeers.Where(x => x != horizontalPeerId).ToList();
-            int verticalPeerId = _connectedPeers[Random.Range(0, availablePeers.Count)];
-            Send(verticalPeerId, new ServerRoleAssignmentMessage()
-            {
-                CurrentRole = ServerRoleAssignmentMessage.Role.Vertical,
-            });
+            _stateManager.ChangeServerState(StateManager.State.Playing);
         }
         else
         {
+            // todo: handle spectators being able to join in the middle of a game
             // Send current state to connecting client
             Send(peerId, new ServerStateChangeMessage()
             {
@@ -138,7 +110,7 @@ public class Server : MonoBehaviour
     {
         Debug.Log($"Client disconnected, id: {peerId}");
         
-        _connectedPeers.Remove(peerId);
+        ConnectedPeers.Remove(peerId);
     }
 
     private void WebServerOnonData(int peerId, ArraySegment<byte> data)
@@ -174,7 +146,7 @@ public class Server : MonoBehaviour
     public void SendAll(BitSerializable serializable)
     {
         ArraySegment<byte> bytes = Writer.SerializeToByteSegment(serializable);
-        _webServer.SendAll(_connectedPeers, bytes);
+        _webServer.SendAll(ConnectedPeers, bytes);
     }
     
     public void Send(int peerId, BitSerializable serializable)

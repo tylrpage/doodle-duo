@@ -8,18 +8,15 @@ public class PlayerDrawing : MonoBehaviour
     public bool[,] pixelData;
     private Texture2D _drawingTexture;
     [SerializeField] private Image image;
-    private DrawingManager _drawingManager;
     private int width;
     private int height;
     private bool[,] expandKernel;
 
-    void Start() {
-        _drawingManager = GameManager.Instance.GetService<DrawingManager>();
-        _drawingManager.DotMoved += AdvancePixelData;
-        _drawingManager.DotReset += OnDotReset;
-        width = (int)_drawingManager.PageSize.x;
-        height = (int)_drawingManager.PageSize.y;
-
+    public void Init(int width, int height)
+    {
+        this.width = width;
+        this.height = height;
+        
         pixelData = new bool[width, height];
         _drawingTexture = new Texture2D(width, height);
         for (int i = 0; i < width; i++) {
@@ -33,7 +30,6 @@ public class PlayerDrawing : MonoBehaviour
     }
 
     void OnDisable() {
-        _drawingManager.DotMoved -= AdvancePixelData;
         Destroy(_drawingTexture);
     }
 
@@ -46,7 +42,7 @@ public class PlayerDrawing : MonoBehaviour
         _drawingTexture.Apply();
     }
 
-    private void OnDotReset()
+    public void Clear()
     {
         // Clear our drawing
         for (int i = 0; i < width; i++) {

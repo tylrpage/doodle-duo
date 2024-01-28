@@ -6,9 +6,12 @@ public class DrawingManager : MonoBehaviour, IService
     public Vector2 DotPosition { get; private set; } // Page space
     public event Action<Vector2> DotMoved;
     public event Action DotReset;
+    public event Action DrawingFinished;
 
     [field: SerializeField] public Vector2 PageSize { get; private set; }
     [SerializeField] private int dotSpeed;
+    [SerializeField] private float requiredDistanceToEnd;
+    [SerializeField] private PlayerDrawing _playerDrawing;
 
     private NetworkManager _networkManager;
     private StateManager _stateManager;
@@ -22,6 +25,7 @@ public class DrawingManager : MonoBehaviour, IService
     private void Awake()
     {
         GameManager.Instance.RegisterService(this);
+        _playerDrawing.Init((int)PageSize.x, (int)PageSize.y);
     }
 
     private void Start()
@@ -43,18 +47,23 @@ public class DrawingManager : MonoBehaviour, IService
         switch (message)
         {
             case ClientInputMessage inputMessage:
-                MoveDot(inputMessage.Direction);
+                if (_stateManager.CurrentState == StateManager.State.Playing)
+                {
+                    MoveDot(inputMessage.Direction);
+                }
                 break;
             case ServerGameStateMessage gameStateMessage:
                 // todo: smooth movement?
                 if (gameStateMessage.DoReset)
                 {
                     DotPosition = _imageManager.CurrentLevel.start;
+                    _playerDrawing.Clear();
                     DotReset?.Invoke();
                 }
                 else
                 {
                     DotPosition = gameStateMessage.DotPosition;
+                    _playerDrawing.AdvancePixelData(DotPosition);
                     DotMoved?.Invoke(DotPosition);
                 }
                 break;
@@ -129,15 +138,25 @@ public class DrawingManager : MonoBehaviour, IService
             Mathf.Clamp(DotPosition.y + input.y, 0, PageSize.y)
         );
         
+        // Check for reaching the end
+        if ((DotPosition - _imageManager.CurrentLevel.end).magnitude < requiredDistanceToEnd)
+        {
+            // Finished the level!
+            DrawingFinished?.Invoke();
+            
+            _stateManager.ChangeServerState(StateManager.State.Ending);
+        }
         // Check for out of bounds of the outline
-        if (!_imageManager.CurrentLevel.processedOutlinePixelData[(int)DotPosition.x, (int)DotPosition.y])
+        else if (!_imageManager.CurrentLevel.processedOutlinePixelData[(int)DotPosition.x, (int)DotPosition.y])
         {
             _resetNextUpdate = true;
             DotPosition = _imageManager.CurrentLevel.start;
+            _playerDrawing.Clear();
             DotReset?.Invoke();
         }
         else
         {
+            _playerDrawing.AdvancePixelData(DotPosition);
             DotMoved?.Invoke(DotPosition);
         }
     }
@@ -145,5 +164,6 @@ public class DrawingManager : MonoBehaviour, IService
     private void OnImageChanged()
     {
         DotPosition = _imageManager.CurrentLevel.start;
+        _playerDrawing.Clear();
     }
 }

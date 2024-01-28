@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -92,6 +93,10 @@ public class UIManager : MonoBehaviour, IService
                 // Show stuff to play
                 dot.gameObject.SetActive(true);
                 outlineImage.gameObject.SetActive(true);
+                finalImage.gameObject.SetActive(false);
+                break;
+            case StateManager.State.Ending:
+                finalImage.gameObject.SetActive(true);
                 break;
         }
     }

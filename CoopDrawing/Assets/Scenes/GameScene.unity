@@ -1248,6 +1248,7 @@ GameObject:
   - component: {fileID: 1313837309}
   - component: {fileID: 1313837308}
   - component: {fileID: 1313837310}
+  - component: {fileID: 1313837311}
   m_Layer: 0
   m_Name: ImageUtils
   m_TagString: Untagged
@@ -1302,6 +1303,19 @@ MonoBehaviour:
   finalImage: {fileID: 0}
   StartPositionPercentage: {x: 0, y: 0}
   EndPositionPercentage: {x: 0, y: 0}
+--- !u!114 &1313837311
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1313837307}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23a1137a98271f649a1256557717be6a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  image: {fileID: 973642894}
 --- !u!1 &1364574196
 GameObject:
   m_ObjectHideFlags: 0
@@ -1457,7 +1471,6 @@ GameObject:
   - component: {fileID: 2042559160}
   - component: {fileID: 2042559161}
   - component: {fileID: 2042559162}
-  - component: {fileID: 2042559163}
   m_Layer: 0
   m_Name: _Managers
   m_TagString: Untagged
@@ -1504,7 +1517,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dfd238e195d35594e9893974a2527142, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  nonCloneIsServer: 1
+  nonCloneIsServer: 0
   connectToRemote: 0
 --- !u!114 &2042559160
 MonoBehaviour:
@@ -1520,6 +1533,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <PageSize>k__BackingField: {x: 686, y: 382}
   dotSpeed: 30
+  requiredDistanceToEnd: 5
+  _playerDrawing: {fileID: 1313837311}
 --- !u!114 &2042559161
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1551,16 +1566,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d4ffb55710a9403c8b46ac9bc9596f69, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &2042559163
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2042559156}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 23a1137a98271f649a1256557717be6a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  image: {fileID: 973642894}
+  <EndPictureDuration>k__BackingField: 1.5
