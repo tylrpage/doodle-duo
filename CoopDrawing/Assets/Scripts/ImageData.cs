@@ -24,13 +24,19 @@ public class ImageData : MonoBehaviour
     public Vector2 EndPositionPercentage;
 
     void Awake() {
-        expandKernel = GenerateKernel(15);
+        expandKernel = GenerateKernel(5);
     }
 
     // Loads the images from their paths
-    public void SetNewImage(string pathToOutline, string pathToFinal) {
-        outlineImage = Resources.Load<Texture2D>(pathToOutline);
-        finalImage = Resources.Load<Texture2D>(pathToFinal);
+    public void SetNewImage(string pathToOutline, string pathToFinal)
+    {
+        SetNewImage(Resources.Load<Texture2D>(pathToOutline), Resources.Load<Texture2D>(pathToFinal));
+    }
+
+    public void SetNewImage(Texture2D outline, Texture2D final)
+    {
+        outlineImage = outline;
+        finalImage = final;
         pixelData = ProcessImage(outlineImage);
     }
 
@@ -93,7 +99,7 @@ public class ImageData : MonoBehaviour
     private bool[,] GenerateKernel(int size) {
         bool[,] kernel = new bool[size, size];
         float radius = size / 2.0f;
-        Vector2 center = new Vector2(size / 2, size / 2);
+        Vector2 center = new Vector2(size / 2f, size / 2f);
         for (int i = 0; i < kernel.GetLength(0); i++) {
             for (int j = 0; j < kernel.GetLength(1); j++) {
                 Vector2 point = new Vector2(i, j);

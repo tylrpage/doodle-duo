@@ -75,7 +75,7 @@ public class UIManager : MonoBehaviour, IService
             return;
         }
         
-        outlineImage.sprite = _imageManager.levels[_imageManager.CurrentImageIndex].outline;
+        outlineImage.sprite = _imageManager.levels[_imageManager.CurrentImageIndex].processedOutline;
         finalImage.sprite = _imageManager.levels[_imageManager.CurrentImageIndex].final;
     }
 }

@@ -6,7 +6,8 @@ public class ImageViewer : MonoBehaviour
 {
     [SerializeField] private SpriteRenderer spriteRenderer;
 
-    public void RenderImage(bool[,] pixelData) {
+    public Sprite GetRenderedSprite(bool[,] pixelData)
+    {
         int width = pixelData.GetLength(0);
         int height = pixelData.GetLength(1);
         Texture2D texture = new Texture2D(width, height);
@@ -20,7 +21,11 @@ public class ImageViewer : MonoBehaviour
         }
         texture.SetPixels(testColors);
         texture.Apply();
-        spriteRenderer.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
+        return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
+    }
+
+    public void RenderImage(bool[,] pixelData) {
+        spriteRenderer.sprite = GetRenderedSprite(pixelData);
 
         ScaleImageToFit();
     }
