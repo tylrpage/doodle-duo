@@ -93,7 +93,7 @@ public class Server : MonoBehaviour
         if (_stateManager.CurrentState == StateManager.State.Waiting && ConnectedPeers.Count >= 2)
         {
             // Begin game
-            _stateManager.ChangeServerState(StateManager.State.Playing);
+            _stateManager.ChangeServerState(StateManager.State.CountIn);
         }
         else
         {

@@ -12,6 +12,7 @@ public class StateManager : MonoBehaviour, IService
     public enum State : short
     {
         Waiting,
+        CountIn,
         Playing,
         Ending, // End of level sequence
         Fail,
@@ -20,6 +21,8 @@ public class StateManager : MonoBehaviour, IService
     public State CurrentState { get; private set; }
 
     [field: SerializeField] public float EndPictureDuration { get; private set; }
+    [field: SerializeField] public float BaseTimeLimit { get; private set; } // determined by music duration
+    [SerializeField] private float countInDuration;
     private NetworkManager _networkManager;
     private ImageManager _imageManager;
 
@@ -71,16 +74,24 @@ public class StateManager : MonoBehaviour, IService
         {
             case State.Waiting:
                 break;
-            case State.Playing:
+            case State.CountIn:
                 if (_networkManager.IsServer)
                 {
-                    // Get the first image
+                    // Get the next image
                     _imageManager.GetNextImage();
                     _networkManager.Server.SendAll(new ServerChangeImageMessage()
                     {
                         ImageIndex = _imageManager.CurrentImageIndex,
                     });
-            
+
+                    float scaledCountInDuration = countInDuration *
+                                                  (_imageManager.CurrentLevel.timeLimit / BaseTimeLimit);
+                    StartCoroutine(ServerWaitAndChangeStateCoroutine(State.Playing, scaledCountInDuration));
+                }
+                break;
+            case State.Playing:
+                if (_networkManager.IsServer)
+                {
                     // Assign roles randomly
                     List<int> connectedPeers = _networkManager.Server.ConnectedPeers;
                     int horizontalPeerId = connectedPeers[Random.Range(0, connectedPeers.Count)];
@@ -102,7 +113,7 @@ public class StateManager : MonoBehaviour, IService
                 if (_networkManager.IsServer)
                 {
                     // Give time to see the final image, then move onto the next image
-                    StartCoroutine(ServerWaitAndChangeStateCoroutine(State.Playing, EndPictureDuration));
+                    StartCoroutine(ServerWaitAndChangeStateCoroutine(State.CountIn, EndPictureDuration));
                 }
                 break;
         }

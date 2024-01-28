@@ -50,6 +50,7 @@ public class PlayerDrawing : MonoBehaviour
                 _drawingTexture.SetPixel(i, j, Color.clear);
             }
         }
+        _drawingTexture.Apply();
     }
 
     // Sets the drawn image to match with whatever is in the list of given dotPositions. Use this to rewind to previous states.

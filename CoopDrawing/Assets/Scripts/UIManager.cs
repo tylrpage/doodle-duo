@@ -125,6 +125,14 @@ public class UIManager : MonoBehaviour, IService
                 drawingImage.gameObject.SetActive(false);
                 timerText.gameObject.SetActive(false);
                 break;
+            case StateManager.State.CountIn:
+                dot.gameObject.SetActive(false);
+                outlineImage.gameObject.SetActive(false);
+                finalImage.gameObject.SetActive(false);
+                drawingImage.gameObject.SetActive(false);
+                timerText.gameObject.SetActive(true);
+                timerText.text = "Get Ready...";
+                break;
             case StateManager.State.Playing:
                 // Show stuff to play
                 dot.gameObject.SetActive(true);
