@@ -18,6 +18,7 @@ public class ImageManager : MonoBehaviour, IService
     {
         public Sprite outline;
         public Sprite final;
+        public float timeLimit;
         [NonSerialized] public Sprite processedOutline;
         [NonSerialized] public Vector2 start;
         [NonSerialized] public Vector2 end;

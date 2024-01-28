@@ -4,6 +4,7 @@ using UnityEngine;
 public class DrawingManager : MonoBehaviour, IService
 {
     public Vector2 DotPosition { get; private set; } // Page space
+    public float TimeLeft { get; private set; }
     public event Action<Vector2> DotMoved;
     public event Action DotReset;
     public event Action DrawingFinished;
@@ -11,7 +12,7 @@ public class DrawingManager : MonoBehaviour, IService
     [field: SerializeField] public Vector2 PageSize { get; private set; }
     [SerializeField] private int dotSpeed;
     [SerializeField] private float requiredDistanceToEnd;
-    [SerializeField] private PlayerDrawing _playerDrawing;
+    [SerializeField] private PlayerDrawing playerDrawing;
 
     private NetworkManager _networkManager;
     private StateManager _stateManager;
@@ -25,7 +26,7 @@ public class DrawingManager : MonoBehaviour, IService
     private void Awake()
     {
         GameManager.Instance.RegisterService(this);
-        _playerDrawing.Init((int)PageSize.x, (int)PageSize.y);
+        playerDrawing.Init((int)PageSize.x, (int)PageSize.y);
     }
 
     private void Start()
@@ -57,13 +58,13 @@ public class DrawingManager : MonoBehaviour, IService
                 if (gameStateMessage.DoReset)
                 {
                     DotPosition = _imageManager.CurrentLevel.start;
-                    _playerDrawing.Clear();
+                    playerDrawing.Clear();
                     DotReset?.Invoke();
                 }
                 else
                 {
                     DotPosition = gameStateMessage.DotPosition;
-                    _playerDrawing.AdvancePixelData(DotPosition);
+                    playerDrawing.AdvancePixelData(DotPosition);
                     DotMoved?.Invoke(DotPosition);
                 }
                 break;
@@ -75,9 +76,20 @@ public class DrawingManager : MonoBehaviour, IService
 
     private void Update()
     {
+        // Update timer
+        if (_stateManager.CurrentState == StateManager.State.Playing)
+        {
+            TimeLeft -= Time.deltaTime;
+        }
+        
         if (_networkManager.IsServer)
         {
-            if (_dotMovedSinceUpdate)
+            if (_stateManager.CurrentState == StateManager.State.Playing && TimeLeft < -0.25f)
+            {
+                // Game over
+                _stateManager.ChangeServerState(StateManager.State.Fail);
+            }
+            else if (_dotMovedSinceUpdate)
             {
                 // If the dot moved, tell clients the dot position
                 _dotMovedSinceUpdate = false;
@@ -151,12 +163,12 @@ public class DrawingManager : MonoBehaviour, IService
         {
             _resetNextUpdate = true;
             DotPosition = _imageManager.CurrentLevel.start;
-            _playerDrawing.Clear();
+            playerDrawing.Clear();
             DotReset?.Invoke();
         }
         else
         {
-            _playerDrawing.AdvancePixelData(DotPosition);
+            playerDrawing.AdvancePixelData(DotPosition);
             DotMoved?.Invoke(DotPosition);
         }
     }
@@ -164,6 +176,9 @@ public class DrawingManager : MonoBehaviour, IService
     private void OnImageChanged()
     {
         DotPosition = _imageManager.CurrentLevel.start;
-        _playerDrawing.Clear();
+        playerDrawing.Clear();
+        
+        // Set timer
+        TimeLeft = _imageManager.CurrentLevel.timeLimit;
     }
 }

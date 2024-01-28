@@ -14,6 +14,7 @@ public class StateManager : MonoBehaviour, IService
         Waiting,
         Playing,
         Ending, // End of level sequence
+        Fail,
     }
     
     public State CurrentState { get; private set; }

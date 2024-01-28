@@ -11,8 +11,13 @@ public class UIManager : MonoBehaviour, IService
     [SerializeField] private Transform page;
     [SerializeField] private Image finalImage;
     [SerializeField] private Image outlineImage;
+    [SerializeField] private Image drawingImage;
     [SerializeField] private Knob horizontalKnob;
     [SerializeField] private Knob verticalKnob;
+    [SerializeField] private TMP_Text timerText;
+    [SerializeField] private float timerDangerPercentage;
+    [SerializeField] private Color timerDangerColor;
+    [SerializeField] private Color timerNormalColor;
 
     private DrawingManager _drawingManager;
     private StateManager _stateManager;
@@ -72,6 +77,27 @@ public class UIManager : MonoBehaviour, IService
             }
         }
         _previousDotPosition = _drawingManager.DotPosition;
+        
+        // Update timer
+        if (_stateManager.CurrentState == StateManager.State.Playing)
+        {
+            float initialTimeLimit = _imageManager.CurrentLevel.timeLimit;
+            float percentageLeft = _drawingManager.TimeLeft / initialTimeLimit;
+            // Actual time left can go a little negative, to be nice, but don't show that
+            float timeLeftNonNeg = Mathf.Max(0, _drawingManager.TimeLeft);
+            if (percentageLeft > timerDangerPercentage)
+            {
+                timerText.color = timerNormalColor;
+                timerText.text = timeLeftNonNeg.ToString("N0");
+            }
+            else
+            {
+                // Danger timer
+                timerText.color = timerDangerColor;
+                // Show some decimal places for fun
+                timerText.text = timeLeftNonNeg.ToString("F2");
+            }   
+        }
     }
 
     public void SetStatusText(string text)
@@ -88,12 +114,16 @@ public class UIManager : MonoBehaviour, IService
                 dot.gameObject.SetActive(false);
                 outlineImage.gameObject.SetActive(false);
                 finalImage.gameObject.SetActive(false);
+                drawingImage.gameObject.SetActive(false);
+                timerText.gameObject.SetActive(false);
                 break;
             case StateManager.State.Playing:
                 // Show stuff to play
                 dot.gameObject.SetActive(true);
                 outlineImage.gameObject.SetActive(true);
                 finalImage.gameObject.SetActive(false);
+                drawingImage.gameObject.SetActive(true);
+                timerText.gameObject.SetActive(true);
                 break;
             case StateManager.State.Ending:
                 finalImage.gameObject.SetActive(true);
