@@ -89,7 +89,7 @@ public class DrawingManager : MonoBehaviour, IService
             if (_stateManager.CurrentState == StateManager.State.Playing && TimeLeft < -0.25f)
             {
                 // Game over
-                _stateManager.ChangeServerState(StateManager.State.Fail);
+                _stateManager.ChangeServerState(StateManager.State.Restarting);
             }
             else if (_dotMovedSinceUpdate)
             {

@@ -15,9 +15,11 @@ public class UIManager : MonoBehaviour, IService
     [SerializeField] private Knob horizontalKnob;
     [SerializeField] private Knob verticalKnob;
     [SerializeField] private TMP_Text timerText;
-    [SerializeField] private float timerDangerPercentage;
+    [SerializeField] private float timerDangerMax;
     [SerializeField] private Color timerDangerColor;
     [SerializeField] private Color timerNormalColor;
+    [SerializeField] private TMP_Text waitingText;
+    [SerializeField] private TMP_Text restartingText;
 
     private DrawingManager _drawingManager;
     private StateManager _stateManager;
@@ -89,11 +91,9 @@ public class UIManager : MonoBehaviour, IService
         // Update timer
         if (_stateManager.CurrentState == StateManager.State.Playing)
         {
-            float initialTimeLimit = _imageManager.CurrentLevel.timeLimit;
-            float percentageLeft = _drawingManager.TimeLeft / initialTimeLimit;
             // Actual time left can go a little negative, to be nice, but don't show that
             float timeLeftNonNeg = Mathf.Max(0, _drawingManager.TimeLeft);
-            if (percentageLeft > timerDangerPercentage)
+            if (timeLeftNonNeg > timerDangerMax)
             {
                 timerText.color = timerNormalColor;
                 timerText.text = timeLeftNonNeg.ToString("N0");
@@ -124,6 +124,8 @@ public class UIManager : MonoBehaviour, IService
                 finalImage.gameObject.SetActive(false);
                 drawingImage.gameObject.SetActive(false);
                 timerText.gameObject.SetActive(false);
+                waitingText.gameObject.SetActive(true);
+                restartingText.gameObject.SetActive(false);
                 break;
             case StateManager.State.CountIn:
                 dot.gameObject.SetActive(false);
@@ -132,6 +134,8 @@ public class UIManager : MonoBehaviour, IService
                 drawingImage.gameObject.SetActive(false);
                 timerText.gameObject.SetActive(true);
                 timerText.text = "Get Ready...";
+                waitingText.gameObject.SetActive(false);
+                restartingText.gameObject.SetActive(false);
                 break;
             case StateManager.State.Playing:
                 // Show stuff to play
@@ -140,9 +144,17 @@ public class UIManager : MonoBehaviour, IService
                 finalImage.gameObject.SetActive(false);
                 drawingImage.gameObject.SetActive(true);
                 timerText.gameObject.SetActive(true);
+                waitingText.gameObject.SetActive(false);
                 break;
             case StateManager.State.Ending:
                 finalImage.gameObject.SetActive(true);
+                waitingText.gameObject.SetActive(false);
+                break;
+            case StateManager.State.Restarting:
+                restartingText.gameObject.SetActive(true);
+                waitingText.gameObject.SetActive(false);
+                timerText.color = timerNormalColor;
+                timerText.text = "Time's Up!";
                 break;
         }
     }

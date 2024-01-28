@@ -74,4 +74,10 @@ public class ImageManager : MonoBehaviour, IService
         
         ImageChanged?.Invoke();
     }
+
+    public void Reset()
+    {
+        // Count in will increment this again to 0
+        CurrentImageIndex = -1;
+    }
 }

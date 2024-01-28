@@ -40,7 +40,7 @@ public class SoundPlayer : MonoBehaviour
     {
         switch (newState)
         {
-            case StateManager.State.Fail:
+            case StateManager.State.Restarting:
                 // todo: play fail sfx
                 break;
             case StateManager.State.Ending:

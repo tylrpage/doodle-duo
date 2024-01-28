@@ -15,7 +15,7 @@ public class StateManager : MonoBehaviour, IService
         CountIn,
         Playing,
         Ending, // End of level sequence
-        Fail,
+        Restarting,
     }
     
     public State CurrentState { get; private set; }
@@ -23,6 +23,7 @@ public class StateManager : MonoBehaviour, IService
     [field: SerializeField] public float EndPictureDuration { get; private set; }
     [field: SerializeField] public float BaseTimeLimit { get; private set; } // determined by music duration
     [SerializeField] private float countInDuration;
+    [SerializeField] private float restartingDuration;
     private NetworkManager _networkManager;
     private ImageManager _imageManager;
 
@@ -116,8 +117,24 @@ public class StateManager : MonoBehaviour, IService
                     StartCoroutine(ServerWaitAndChangeStateCoroutine(State.CountIn, EndPictureDuration));
                 }
                 break;
+            case State.Restarting:
+                if (_networkManager.IsServer)
+                {
+                    StartCoroutine(RestartCoroutine());
+                }
+
+                break;
         }
         
         StateChanged?.Invoke(newState);
+    }
+
+    private IEnumerator RestartCoroutine()
+    {
+        yield return new WaitForSeconds(restartingDuration);
+        
+        // Go back to first image
+        _imageManager.Reset();
+        ChangeServerState(State.CountIn);
     }
 }
