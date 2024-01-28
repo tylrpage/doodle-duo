@@ -1,14 +1,18 @@
 using System;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour, IService
 {
     [SerializeField] private TMP_Text statusText;
     [SerializeField] private Transform dot;
     [SerializeField] private Transform page;
+    [SerializeField] private Image finalImage;
+    [SerializeField] private Image outlineImage;
 
     private DrawingManager _drawingManager;
+    private StateManager _stateManager;
 
     private void Awake()
     {
@@ -18,6 +22,30 @@ public class UIManager : MonoBehaviour, IService
     private void Start()
     {
         _drawingManager = GameManager.Instance.GetService<DrawingManager>();
+        
+        _stateManager = GameManager.Instance.GetService<StateManager>();
+        _stateManager.StateChanged += OnStateChanged;
+        OnStateChanged(_stateManager.CurrentState);
+    }
+
+    private void OnStateChanged(StateManager.State newState)
+    {
+        switch (newState)
+        {
+            case StateManager.State.Waiting:
+                // Hide everything
+                dot.gameObject.SetActive(false);
+                page.gameObject.SetActive(false);
+                outlineImage.gameObject.SetActive(false);
+                finalImage.gameObject.SetActive(false);
+                break;
+            case StateManager.State.Playing:
+                // Show stuff to play
+                dot.gameObject.SetActive(true);
+                page.gameObject.SetActive(true);
+                outlineImage.gameObject.SetActive(true);
+                break;
+        }
     }
 
     private void LateUpdate()

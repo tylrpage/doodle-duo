@@ -13,14 +13,13 @@ public class Server : MonoBehaviour
     private bool _listening;
     private UIManager _uiManager;
     private List<int> _connectedPeers = new List<int>();
-    private StateMachine _stateMachine;
+    private StateManager _stateManager;
 
     private void Awake()
     {
         Application.targetFrameRate = Constants.Tick;
         
         _uiManager = GameManager.Instance.GetService<UIManager>();
-        _stateMachine = new StateMachine(this);
         
         _webServer = Listen();
         
@@ -28,8 +27,12 @@ public class Server : MonoBehaviour
         _webServer.onData += WebServerOnonData;
         _webServer.onError += WsOnonError;
         _webServer.onDisconnect += WebServerOnonDisconnect;
-        
-        _stateMachine.ChangeState(StateMachine.State.Waiting);
+    }
+
+    private void Start()
+    {
+        _stateManager = GameManager.Instance.GetService<StateManager>();
+        _stateManager.ChangeState(StateManager.State.Waiting);
     }
 
     private void OnDestroy()
@@ -84,14 +87,14 @@ public class Server : MonoBehaviour
         
         _connectedPeers.Add(peerId);
 
-        if (_stateMachine.CurrentState == StateMachine.State.Waiting && _connectedPeers.Count >= 2)
+        if (_stateManager.CurrentState == StateManager.State.Waiting && _connectedPeers.Count >= 2)
         {
             // Begin game
-            _stateMachine.ChangeState(StateMachine.State.Playing);
+            _stateManager.ChangeState(StateManager.State.Playing);
             // Tell all clients about the new state
             StateChangeMessage stateChangeMessage = new StateChangeMessage()
             {
-                StateId = (short)_stateMachine.CurrentState,
+                StateId = (short)_stateManager.CurrentState,
             };
             ArraySegment<byte> bytes = Writer.SerializeToByteSegment(stateChangeMessage);
             _webServer.SendAll(_connectedPeers, bytes);
@@ -101,7 +104,7 @@ public class Server : MonoBehaviour
             // Send current state to connecting client
             StateChangeMessage stateChangeMessage = new StateChangeMessage()
             {
-                StateId = (short)_stateMachine.CurrentState,
+                StateId = (short)_stateManager.CurrentState,
             };
             ArraySegment<byte> bytes = Writer.SerializeToByteSegment(stateChangeMessage);
             _webServer.SendOne(peerId, bytes);   

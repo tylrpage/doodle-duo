@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using UnityEditor.VersionControl;
 using UnityEngine;
 
-public class StateMachine
+public class StateManager : MonoBehaviour, IService
 {
+    public event Action<State> StateChanged;
+    
     public enum State : short
     {
         Waiting,
@@ -13,14 +15,33 @@ public class StateMachine
     
     public State CurrentState { get; private set; }
 
-    public StateMachine(Client client)
+    private NetworkManager _networkManager;
+
+    private void Awake()
     {
-        client.MessageReceived += OnMessageReceived;
+        GameManager.Instance.RegisterService(this);
     }
 
-    public StateMachine(Server server)
+    private void Start()
     {
-        server.MessageReceived += OnMessageReceived;
+        _networkManager = GameManager.Instance.GetService<NetworkManager>();
+        _networkManager.Sided += OnSided;
+        if (_networkManager.IsSided)
+        {
+            OnSided();
+        }
+    }
+
+    private void OnSided()
+    {
+        if (_networkManager.IsServer)
+        {
+            _networkManager.Server.MessageReceived += OnMessageReceived;
+        }
+        else
+        {
+            _networkManager.Client.MessageReceived += OnMessageReceived;
+        }
     }
     
     private void OnMessageReceived(BitSerializable message)
@@ -42,8 +63,9 @@ public class StateMachine
             case State.Waiting:
                 break;
             case State.Playing:
-                // todo: show image
                 break;
         }
+        
+        StateChanged?.Invoke(newState);
     }
 }

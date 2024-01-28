@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 #if UNITY_EDITOR
@@ -6,6 +7,10 @@ using ParrelSync;
 
 public class NetworkManager : MonoBehaviour, IService
 {
+    // Don't forget to check if it already IsSided when subbing
+    public event Action Sided;
+    public bool IsSided { get; private set; }
+    
     [SerializeField] private bool nonCloneIsServer;
     [SerializeField] private bool connectToRemote;
     
@@ -54,11 +59,17 @@ public class NetworkManager : MonoBehaviour, IService
         IsServer = false;
         Client = gameObject.AddComponent<Client>();
         Client.Connect(connectToRemote);
+        
+        Sided?.Invoke();
+        IsSided = true;
     }
 
     private void StartServer()
     {
         IsServer = true;
         Server = gameObject.AddComponent<Server>();
+        
+        Sided?.Invoke();
+        IsSided = true;
     }
 }

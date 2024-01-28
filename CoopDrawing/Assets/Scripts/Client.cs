@@ -12,7 +12,7 @@ public class Client : MonoBehaviour
     private UIManager _uiManager;
     private SimpleWebClient _ws;
     private bool _connected;
-    private StateMachine _stateMachine;
+    private StateManager _stateManager;
 
     private void Awake()
     {
@@ -20,13 +20,16 @@ public class Client : MonoBehaviour
         
         TcpConfig tcpConfig = new TcpConfig(false, 5000, 20000);
         _ws = SimpleWebClient.Create(16*1024, 5000, tcpConfig);
-
-        _stateMachine = new StateMachine(this);
         
         _ws.onData += WsOnonData;
         _ws.onDisconnect += WsOnonDisconnect;
         _ws.onConnect += WsOnonConnect;
         _ws.onError += WsOnonError;
+    }
+    
+    private void Start()
+    {
+        _stateManager = GameManager.Instance.GetService<StateManager>();
     }
 
     private void Update()

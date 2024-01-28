@@ -12,6 +12,7 @@ public class DrawingManager : MonoBehaviour, IService
     [SerializeField] private int dotSpeed;
 
     private NetworkManager _networkManager;
+    private StateManager _stateManager;
     private Vector2 _clientUnsentInputTotal;
     private float _clientTimeSinceSentInput;
     
@@ -26,6 +27,7 @@ public class DrawingManager : MonoBehaviour, IService
         DotPosition = PageSize / 2f;
         
         _networkManager = GameManager.Instance.GetService<NetworkManager>();
+        _stateManager = GameManager.Instance.GetService<StateManager>();
 
         if (_networkManager.IsServer)
         {
@@ -63,6 +65,11 @@ public class DrawingManager : MonoBehaviour, IService
         }
         else
         {
+            // Must be playing to move the dot
+            if (_stateManager.CurrentState != StateManager.State.Playing)
+                return;
+            
+            // Collect input
             _clientTimeSinceSentInput += Time.deltaTime;
             _clientUnsentInputTotal += new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical")) 
                                        * (dotSpeed * Time.deltaTime);
