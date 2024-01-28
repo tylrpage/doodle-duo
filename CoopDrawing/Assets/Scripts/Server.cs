@@ -29,7 +29,7 @@ public class Server : MonoBehaviour
         _webServer.onError += WsOnonError;
         _webServer.onDisconnect += WebServerOnonDisconnect;
         
-        _stateMachine.SetState<WaitingState>();
+        _stateMachine.ChangeState(StateMachine.State.Waiting);
     }
 
     private void OnDestroy()
@@ -84,14 +84,14 @@ public class Server : MonoBehaviour
         
         _connectedPeers.Add(peerId);
 
-        if (_stateMachine.CurrentState.GetType() == typeof(WaitingState) && _connectedPeers.Count >= 2)
+        if (_stateMachine.CurrentState == StateMachine.State.Waiting && _connectedPeers.Count >= 2)
         {
             // Begin game
-            _stateMachine.SetState<PlayingState>();
+            _stateMachine.ChangeState(StateMachine.State.Playing);
             // Tell all clients about the new state
             StateChangeMessage stateChangeMessage = new StateChangeMessage()
             {
-                StateId = _stateMachine.GetStateId(_stateMachine.CurrentState),
+                StateId = (short)_stateMachine.CurrentState,
             };
             ArraySegment<byte> bytes = Writer.SerializeToByteSegment(stateChangeMessage);
             _webServer.SendAll(_connectedPeers, bytes);
@@ -101,7 +101,7 @@ public class Server : MonoBehaviour
             // Send current state to connecting client
             StateChangeMessage stateChangeMessage = new StateChangeMessage()
             {
-                StateId = _stateMachine.GetStateId(_stateMachine.CurrentState),
+                StateId = (short)_stateMachine.CurrentState,
             };
             ArraySegment<byte> bytes = Writer.SerializeToByteSegment(stateChangeMessage);
             _webServer.SendOne(peerId, bytes);   
