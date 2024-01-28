@@ -8,6 +8,7 @@ public class PlayerDrawing : MonoBehaviour
     public bool[,] pixelData;
     private Texture2D _drawingTexture;
     [SerializeField] private Image image;
+    [SerializeField] private int kernalSize;
     private int width;
     private int height;
     private bool[,] expandKernel;
@@ -26,7 +27,7 @@ public class PlayerDrawing : MonoBehaviour
         }
         _drawingTexture.Apply();
         image.sprite = Sprite.Create(_drawingTexture, new Rect(0, 0, _drawingTexture.width, _drawingTexture.height), new Vector2(0.5f, 0.5f));
-        expandKernel = GenerateKernel(5);
+        expandKernel = GenerateKernel(kernalSize);
     }
 
     void OnDisable() {

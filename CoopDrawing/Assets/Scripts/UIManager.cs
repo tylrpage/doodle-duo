@@ -173,6 +173,7 @@ public class UIManager : MonoBehaviour, IService
                 waitingText.gameObject.SetActive(false);
                 break;
             case StateManager.State.Ending:
+                outlineImage.gameObject.SetActive(false);
                 finalImage.gameObject.SetActive(true);
                 waitingText.gameObject.SetActive(false);
                 break;
