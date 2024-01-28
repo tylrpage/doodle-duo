@@ -16,6 +16,7 @@ public class PlayerDrawing : MonoBehaviour
     void Start() {
         _drawingManager = GameManager.Instance.GetService<DrawingManager>();
         _drawingManager.DotMoved += AdvancePixelData;
+        _drawingManager.DotReset += OnDotReset;
         width = (int)_drawingManager.PageSize.x;
         height = (int)_drawingManager.PageSize.y;
 
@@ -43,6 +44,16 @@ public class PlayerDrawing : MonoBehaviour
 
         ExpandAroundPixel(pixelData, x, y);
         _drawingTexture.Apply();
+    }
+
+    private void OnDotReset()
+    {
+        // Clear our drawing
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                _drawingTexture.SetPixel(i, j, Color.clear);
+            }
+        }
     }
 
     // Sets the drawn image to match with whatever is in the list of given dotPositions. Use this to rewind to previous states.
@@ -75,7 +86,7 @@ public class PlayerDrawing : MonoBehaviour
                 int expandedY = y + j;
                 if (expandedX >= 0 && expandedX < width && expandedY >= 0 && expandedY < height) {
                     processedPixels[expandedX, expandedY] = true;
-                    _drawingTexture.SetPixel(x, y, Color.black);
+                    _drawingTexture.SetPixel(expandedX, expandedY, Color.black);
                 }
             }
         }

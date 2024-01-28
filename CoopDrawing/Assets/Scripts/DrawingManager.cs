@@ -5,6 +5,7 @@ public class DrawingManager : MonoBehaviour, IService
 {
     public Vector2 DotPosition { get; private set; } // Page space
     public event Action<Vector2> DotMoved;
+    public event Action DotReset;
 
     [field: SerializeField] public Vector2 PageSize { get; private set; }
     [SerializeField] private int dotSpeed;
@@ -15,6 +16,7 @@ public class DrawingManager : MonoBehaviour, IService
     private Vector2 _clientUnsentInputTotal;
     private float _clientTimeSinceSentInput;
     private bool _dotMovedSinceUpdate;
+    private bool _resetNextUpdate;
     
     private void Awake()
     {
@@ -43,9 +45,17 @@ public class DrawingManager : MonoBehaviour, IService
                 MoveDot(inputMessage.Direction);
                 break;
             case ServerGameStateMessage gameStateMessage:
-                // todo: smooth movement
-                DotPosition = gameStateMessage.DotPosition;
-                DotMoved?.Invoke(DotPosition);
+                // todo: smooth movement?
+                if (gameStateMessage.DoReset)
+                {
+                    DotPosition = _imageManager.CurrentLevel.start;
+                    DotReset?.Invoke();
+                }
+                else
+                {
+                    DotPosition = gameStateMessage.DotPosition;
+                    DotMoved?.Invoke(DotPosition);
+                }
                 break;
         }
     }
@@ -61,7 +71,10 @@ public class DrawingManager : MonoBehaviour, IService
                 _networkManager.Server.SendAll(new ServerGameStateMessage()
                 {
                     DotPosition = DotPosition,
+                    DoReset = _resetNextUpdate
                 });
+
+                _resetNextUpdate = false;
             }
         }
         else
@@ -91,14 +104,9 @@ public class DrawingManager : MonoBehaviour, IService
                 _clientUnsentInputTotal = Vector2.zero;
             }
         }
-        
-        if (_imageManager!= null && _imageManager.CurrentLevel!= null &&
-            !_imageManager.CurrentLevel.processedOutlinePixelData[(int)DotPosition.x, (int)DotPosition.y])
-        {
-            Debug.Log("OUT OF BOUNDS");
-        }
     }
 
+    // Server only
     private void MoveDot(Vector2 input)
     {
         // Ignore tiny values
@@ -107,13 +115,24 @@ public class DrawingManager : MonoBehaviour, IService
             return;
         }
         
+        _dotMovedSinceUpdate = true;
+        
         DotPosition = new Vector2(
             Mathf.Clamp(DotPosition.x + input.x, 0, PageSize.x),
             Mathf.Clamp(DotPosition.y + input.y, 0, PageSize.y)
         );
-        _dotMovedSinceUpdate = true;
         
-        DotMoved?.Invoke(DotPosition);
+        // Check for out of bounds of the outline
+        if (!_imageManager.CurrentLevel.processedOutlinePixelData[(int)DotPosition.x, (int)DotPosition.y])
+        {
+            _resetNextUpdate = true;
+            DotPosition = _imageManager.CurrentLevel.start;
+            DotReset?.Invoke();
+        }
+        else
+        {
+            DotMoved?.Invoke(DotPosition);
+        }
     }
     
     private void OnImageChanged()
