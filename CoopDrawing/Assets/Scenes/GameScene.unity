@@ -945,6 +945,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49e70b587f342b9419d6f24875f0d216, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  outlineColor: {r: 0.3679245, g: 0.3679245, b: 0.3679245, a: 1}
   spriteRenderer: {fileID: 0}
 --- !u!4 &1313837309
 Transform:
@@ -972,6 +973,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 126c7e986ec722541b851f8a1406e13b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  kernalSize: 10
   width: 0
   height: 0
   outlineImage: {fileID: 0}
@@ -1179,7 +1181,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dfd238e195d35594e9893974a2527142, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  nonCloneIsServer: 0
+  nonCloneIsServer: 1
   connectToRemote: 0
 --- !u!114 &2042559160
 MonoBehaviour:
@@ -1210,7 +1212,6 @@ MonoBehaviour:
   levels:
   - outline: {fileID: 21300000, guid: 54184534b7e5ec941a3249852f675cdb, type: 3}
     final: {fileID: 21300000, guid: 85f2b2c5395f86c4888cc52314e57c61, type: 3}
-    processedOutline: {fileID: 0}
   imageData: {fileID: 1313837310}
   imageViewer: {fileID: 1313837308}
 --- !u!114 &2042559162

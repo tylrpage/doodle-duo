@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class ImageViewer : MonoBehaviour
 {
+    [SerializeField] private Color outlineColor;
     [SerializeField] private SpriteRenderer spriteRenderer;
 
     public Sprite GetRenderedSprite(bool[,] pixelData)
@@ -14,9 +15,9 @@ public class ImageViewer : MonoBehaviour
         Color[] testColors = new Color[width * height];
         for (int i = 0; i < testColors.Length; i++) {
             if (pixelData[i % width, i / width]) {
-                testColors[i] = Color.black;
+                testColors[i] = outlineColor;
             } else {
-                testColors[i] = Color.white;
+                testColors[i] = Color.clear;
             }
         }
         texture.SetPixels(testColors);

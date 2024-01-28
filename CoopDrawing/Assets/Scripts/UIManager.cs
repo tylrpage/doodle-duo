@@ -51,14 +51,12 @@ public class UIManager : MonoBehaviour, IService
             case StateManager.State.Waiting:
                 // Hide everything
                 dot.gameObject.SetActive(false);
-                page.gameObject.SetActive(false);
                 outlineImage.gameObject.SetActive(false);
                 finalImage.gameObject.SetActive(false);
                 break;
             case StateManager.State.Playing:
                 // Show stuff to play
                 dot.gameObject.SetActive(true);
-                page.gameObject.SetActive(true);
                 outlineImage.gameObject.SetActive(true);
                 break;
         }

@@ -13,6 +13,7 @@ public class DrawingManager : MonoBehaviour, IService
 
     private NetworkManager _networkManager;
     private StateManager _stateManager;
+    private ImageManager _imageManager;
     private Vector2 _clientUnsentInputTotal;
     private float _clientTimeSinceSentInput;
     
@@ -30,6 +31,9 @@ public class DrawingManager : MonoBehaviour, IService
         _networkManager.MessageReceived += OnMessageReceived;
         
         _stateManager = GameManager.Instance.GetService<StateManager>();
+
+        _imageManager = GameManager.Instance.GetService<ImageManager>();
+        _imageManager.ImageChanged += OnImageChanged;
     }
 
     private void OnMessageReceived(BitSerializable message)
@@ -83,6 +87,12 @@ public class DrawingManager : MonoBehaviour, IService
                 _clientUnsentInputTotal = Vector2.zero;
             }
         }
+        
+        if (_imageManager!= null && _imageManager.CurrentLevel!= null &&
+            !_imageManager.CurrentLevel.processedOutlinePixelData[(int)DotPosition.x, (int)DotPosition.y])
+        {
+            Debug.Log("OUT OF BOUNDS");
+        }
     }
 
     public void MoveDot(Vector2 input)
@@ -91,5 +101,10 @@ public class DrawingManager : MonoBehaviour, IService
             Mathf.Clamp(DotPosition.x + input.x, 0, PageSize.x),
             Mathf.Clamp(DotPosition.y + input.y, 0, PageSize.y)
         );
+    }
+    
+    private void OnImageChanged()
+    {
+        DotPosition = _imageManager.CurrentLevel.start;
     }
 }

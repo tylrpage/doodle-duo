@@ -7,6 +7,7 @@ using System;
 // of the images.
 public class ImageData : MonoBehaviour
 {
+    [SerializeField] private int kernalSize;
     // Width of original image in pixels
     [HideInInspector] public int width;
     // Height of original image in pixels.
@@ -24,7 +25,7 @@ public class ImageData : MonoBehaviour
     public Vector2 EndPositionPercentage;
 
     void Awake() {
-        expandKernel = GenerateKernel(5);
+        expandKernel = GenerateKernel(kernalSize);
     }
 
     // Loads the images from their paths

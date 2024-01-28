@@ -100,6 +100,7 @@ public class Server : MonoBehaviour
                 StateId = (short)_stateManager.CurrentState,
             });
             
+            // Get the first image
             _imageManager.GetNextImage();
             SendAll(new ServerChangeImageMessage()
             {
