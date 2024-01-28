@@ -14,16 +14,15 @@ public class Knob : MonoBehaviour
     void Start() {
         spinning = false;
     }
-
-    // TODO: Replace this with the actual logic when buttons are pressed.
+    
     void Update() {
-        if (Input.GetKey(KeyCode.UpArrow)) {
-            Increase();
-        } else if (Input.GetKey(KeyCode.DownArrow)) {
-            Decrease();
-        } else {
-            Stop();
-        }
+        // if (Input.GetKey(KeyCode.UpArrow)) {
+        //     Increase();
+        // } else if (Input.GetKey(KeyCode.DownArrow)) {
+        //     Decrease();
+        // } else {
+        //     Stop();
+        // }
     }
 
     public void Increase() {

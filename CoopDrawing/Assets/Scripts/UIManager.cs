@@ -10,10 +10,13 @@ public class UIManager : MonoBehaviour, IService
     [SerializeField] private Transform page;
     [SerializeField] private Image finalImage;
     [SerializeField] private Image outlineImage;
+    [SerializeField] private Knob horizontalKnob;
+    [SerializeField] private Knob verticalKnob;
 
     private DrawingManager _drawingManager;
     private StateManager _stateManager;
     private ImageManager _imageManager;
+    private Vector2? _previousDotPosition;
 
     private void Awake()
     {
@@ -35,8 +38,39 @@ public class UIManager : MonoBehaviour, IService
     private void LateUpdate()
     {
         // Calculate and update dot position
-        
         dot.position = _drawingManager.DotPosition + (Vector2)page.position - (_drawingManager.PageSize / 2f);
+        
+        // Update knob animations
+        if (_previousDotPosition != null)
+        {
+            Vector2 delta = _drawingManager.DotPosition - _previousDotPosition.Value;
+            if (delta.x > 0)
+            {
+                horizontalKnob.Increase();
+            }
+            else if (delta.x < 0)
+            {
+                horizontalKnob.Decrease();
+            }
+            else
+            {
+                horizontalKnob.Stop();
+            }
+            
+            if (delta.y > 0)
+            {
+                verticalKnob.Increase();
+            }
+            else if (delta.y < 0)
+            {
+                verticalKnob.Decrease();
+            }
+            else
+            {
+                verticalKnob.Stop();
+            }
+        }
+        _previousDotPosition = _drawingManager.DotPosition;
     }
 
     public void SetStatusText(string text)
