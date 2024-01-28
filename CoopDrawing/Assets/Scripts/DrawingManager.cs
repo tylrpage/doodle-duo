@@ -7,6 +7,7 @@ using UnityEngine.Serialization;
 public class DrawingManager : MonoBehaviour, IService
 {
     public Vector2 DotPosition { get; private set; } // Page space
+    public event Action<Vector2> DotMoved;
 
     [field: SerializeField] public Vector2 PageSize { get; private set; }
     [SerializeField] private int dotSpeed;
@@ -101,6 +102,8 @@ public class DrawingManager : MonoBehaviour, IService
             Mathf.Clamp(DotPosition.x + input.x, 0, PageSize.x),
             Mathf.Clamp(DotPosition.y + input.y, 0, PageSize.y)
         );
+        
+        DotMoved?.Invoke(DotPosition);
     }
     
     private void OnImageChanged()
