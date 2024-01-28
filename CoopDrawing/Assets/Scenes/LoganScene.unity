@@ -135,7 +135,6 @@ GameObject:
   - component: {fileID: 505363265}
   - component: {fileID: 505363264}
   - component: {fileID: 505363263}
-  - component: {fileID: 505363267}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -224,19 +223,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
---- !u!114 &505363267
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 505363262}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4452075e54e61d44986f74186d657a49, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  statusText: {fileID: 1175469523}
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -520,6 +506,28 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1602116501 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6591164833912420535, guid: ee7a5c71cbf553c41b2f90f09abbd0ee, type: 3}
+  m_PrefabInstance: {fileID: 1641824249}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49e70b587f342b9419d6f24875f0d216, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1602116502 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6591164833912420532, guid: ee7a5c71cbf553c41b2f90f09abbd0ee, type: 3}
+  m_PrefabInstance: {fileID: 1641824249}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 126c7e986ec722541b851f8a1406e13b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &1641824249
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -607,7 +615,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bf73ffb27e8d575448cec4d362b92bdf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <UIManager>k__BackingField: {fileID: 505363267}
 --- !u!4 &2042559158
 Transform:
   m_ObjectHideFlags: 0
@@ -634,6 +641,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dfd238e195d35594e9893974a2527142, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  nonCloneIsServer: 0
   connectToRemote: 1
 --- !u!1001 &2072251318
 PrefabInstance:
@@ -690,5 +698,13 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 592461153765757103, guid: a7ba07c316238374f94eb6584b19815e, type: 3}
+      propertyPath: imageData
+      value: 
+      objectReference: {fileID: 1602116502}
+    - target: {fileID: 592461153765757103, guid: a7ba07c316238374f94eb6584b19815e, type: 3}
+      propertyPath: imageViewer
+      value: 
+      objectReference: {fileID: 1602116501}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a7ba07c316238374f94eb6584b19815e, type: 3}
