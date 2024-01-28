@@ -3,23 +3,23 @@ using System.Collections.Generic;
 using NetStack.Serialization;
 using UnityEngine;
 
-public struct StateChangeMessage : BitSerializable
+public struct ServerChangeImageMessage : BitSerializable
 {
-    public const ushort Id = 1;
+    public const ushort Id = 4;
 
-    public short StateId;
+    public short ImageIndex;
 
     public void Serialize(ref BitBuffer data)
     {
         data.AddUShort(Id);
 
-        data.AddShort(StateId);
+        data.AddShort(ImageIndex);
     }
 
     public void Deserialize(ref BitBuffer data)
     {
         data.ReadUShort();
 
-        StateId = data.ReadShort();
+        ImageIndex = data.ReadShort();
     }
 }

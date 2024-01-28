@@ -13,6 +13,7 @@ public class UIManager : MonoBehaviour, IService
 
     private DrawingManager _drawingManager;
     private StateManager _stateManager;
+    private ImageManager _imageManager;
 
     private void Awake()
     {
@@ -26,6 +27,21 @@ public class UIManager : MonoBehaviour, IService
         _stateManager = GameManager.Instance.GetService<StateManager>();
         _stateManager.StateChanged += OnStateChanged;
         OnStateChanged(_stateManager.CurrentState);
+        
+        _imageManager = GameManager.Instance.GetService<ImageManager>();
+        _imageManager.ImageChanged += OnImageChanged;
+    }
+
+    private void LateUpdate()
+    {
+        // Calculate and update dot position
+        
+        dot.position = _drawingManager.DotPosition + (Vector2)page.position - (_drawingManager.PageSize / 2f);
+    }
+
+    public void SetStatusText(string text)
+    {
+        statusText.text = text;
     }
 
     private void OnStateChanged(StateManager.State newState)
@@ -47,16 +63,19 @@ public class UIManager : MonoBehaviour, IService
                 break;
         }
     }
-
-    private void LateUpdate()
+    
+    private void OnImageChanged()
     {
-        // Calculate and update dot position
+        if (_imageManager.CurrentImageIndex < 0)
+        {
+            // No current image
+            outlineImage.sprite = null;
+            finalImage.sprite = null;
+
+            return;
+        }
         
-        dot.position = _drawingManager.DotPosition + (Vector2)page.position - (_drawingManager.PageSize / 2f);
-    }
-
-    public void SetStatusText(string text)
-    {
-        statusText.text = text;
+        outlineImage.sprite = _imageManager.levels[_imageManager.CurrentImageIndex].outline;
+        finalImage.sprite = _imageManager.levels[_imageManager.CurrentImageIndex].final;
     }
 }

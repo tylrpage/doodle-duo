@@ -2,7 +2,7 @@ using NetStack.Quantization;
 using NetStack.Serialization;
 using UnityEngine;
 
-public struct GameStateMessage : BitSerializable
+public struct ServerGameStateMessage : BitSerializable
 {
     public const ushort Id = 3;
 

@@ -27,26 +27,19 @@ public class DrawingManager : MonoBehaviour, IService
         DotPosition = PageSize / 2f;
         
         _networkManager = GameManager.Instance.GetService<NetworkManager>();
+        _networkManager.MessageReceived += OnMessageReceived;
+        
         _stateManager = GameManager.Instance.GetService<StateManager>();
-
-        if (_networkManager.IsServer)
-        {
-            _networkManager.Server.MessageReceived += OnMessageReceived;
-        }
-        else
-        {
-            _networkManager.Client.MessageReceived += OnMessageReceived;
-        }
     }
 
     private void OnMessageReceived(BitSerializable message)
     {
         switch (message)
         {
-            case InputMessage inputMessage:
+            case ClientInputMessage inputMessage:
                 MoveDot(inputMessage.Direction);
                 break;
-            case GameStateMessage gameStateMessage:
+            case ServerGameStateMessage gameStateMessage:
                 // todo: smooth movement
                 DotPosition = gameStateMessage.DotPosition;
                 break;
@@ -58,7 +51,7 @@ public class DrawingManager : MonoBehaviour, IService
         if (_networkManager.IsServer)
         {
             // Tell clients the dot position
-            _networkManager.Server.SendAll(new GameStateMessage()
+            _networkManager.Server.SendAll(new ServerGameStateMessage()
             {
                 DotPosition = DotPosition,
             });
@@ -79,7 +72,7 @@ public class DrawingManager : MonoBehaviour, IService
                 _clientTimeSinceSentInput -= Constants.Step;
                 
                 // Send input to server
-                _networkManager.Client.Send(new InputMessage()
+                _networkManager.Client.Send(new ClientInputMessage()
                 {
                     Direction = _clientUnsentInputTotal,
                     // todo: hook up rewinding

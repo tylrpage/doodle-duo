@@ -25,30 +25,14 @@ public class StateManager : MonoBehaviour, IService
     private void Start()
     {
         _networkManager = GameManager.Instance.GetService<NetworkManager>();
-        _networkManager.Sided += OnSided;
-        if (_networkManager.IsSided)
-        {
-            OnSided();
-        }
-    }
-
-    private void OnSided()
-    {
-        if (_networkManager.IsServer)
-        {
-            _networkManager.Server.MessageReceived += OnMessageReceived;
-        }
-        else
-        {
-            _networkManager.Client.MessageReceived += OnMessageReceived;
-        }
+        _networkManager.MessageReceived += OnMessageReceived;
     }
     
     private void OnMessageReceived(BitSerializable message)
     {
         switch (message)
         {
-            case StateChangeMessage stateChangeMessage:
+            case ServerStateChangeMessage stateChangeMessage:
                 ChangeState((State)stateChangeMessage.StateId);
                 break;
         }

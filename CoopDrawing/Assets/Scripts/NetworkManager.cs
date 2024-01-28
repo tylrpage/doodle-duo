@@ -10,6 +10,7 @@ public class NetworkManager : MonoBehaviour, IService
     // Don't forget to check if it already IsSided when subbing
     public event Action Sided;
     public bool IsSided { get; private set; }
+    public event Action<BitSerializable> MessageReceived;
     
     [SerializeField] private bool nonCloneIsServer;
     [SerializeField] private bool connectToRemote;
@@ -58,16 +59,23 @@ public class NetworkManager : MonoBehaviour, IService
     {
         IsServer = false;
         Client = gameObject.AddComponent<Client>();
+        Client.MessageReceived += OnClientOrServerMessageReceived;
         Client.Connect(connectToRemote);
         
         Sided?.Invoke();
         IsSided = true;
     }
 
+    private void OnClientOrServerMessageReceived(BitSerializable message)
+    {
+        MessageReceived?.Invoke(message);
+    }
+
     private void StartServer()
     {
         IsServer = true;
         Server = gameObject.AddComponent<Server>();
+        Server.MessageReceived += OnClientOrServerMessageReceived;
         
         Sided?.Invoke();
         IsSided = true;

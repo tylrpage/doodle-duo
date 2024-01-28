@@ -14,6 +14,7 @@ public class Server : MonoBehaviour
     private UIManager _uiManager;
     private List<int> _connectedPeers = new List<int>();
     private StateManager _stateManager;
+    private ImageManager _imageManager;
 
     private void Awake()
     {
@@ -33,6 +34,8 @@ public class Server : MonoBehaviour
     {
         _stateManager = GameManager.Instance.GetService<StateManager>();
         _stateManager.ChangeState(StateManager.State.Waiting);
+        
+        _imageManager = GameManager.Instance.GetService<ImageManager>();
     }
 
     private void OnDestroy()
@@ -92,17 +95,21 @@ public class Server : MonoBehaviour
             // Begin game
             _stateManager.ChangeState(StateManager.State.Playing);
             // Tell all clients about the new state
-            StateChangeMessage stateChangeMessage = new StateChangeMessage()
+            SendAll(new ServerStateChangeMessage()
             {
                 StateId = (short)_stateManager.CurrentState,
-            };
-            ArraySegment<byte> bytes = Writer.SerializeToByteSegment(stateChangeMessage);
-            _webServer.SendAll(_connectedPeers, bytes);
+            });
+            
+            _imageManager.GetNextImage();
+            SendAll(new ServerChangeImageMessage()
+            {
+                ImageIndex = _imageManager.CurrentImageIndex,
+            });
         }
         else
         {
             // Send current state to connecting client
-            StateChangeMessage stateChangeMessage = new StateChangeMessage()
+            ServerStateChangeMessage stateChangeMessage = new ServerStateChangeMessage()
             {
                 StateId = (short)_stateManager.CurrentState,
             };
@@ -128,8 +135,8 @@ public class Server : MonoBehaviour
         // todo: get rid of this boilerplate somehow
         switch (messageId)
         {
-            case InputMessage.Id:
-                message = new InputMessage();
+            case ClientInputMessage.Id:
+                message = new ClientInputMessage();
                 message.Deserialize(ref bitBuffer);
                 break;
             default:

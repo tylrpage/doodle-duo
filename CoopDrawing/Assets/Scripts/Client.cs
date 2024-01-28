@@ -77,12 +77,16 @@ public class Client : MonoBehaviour
         // todo: get rid of this boilerplate somehow
         switch (messageId)
         {
-            case StateChangeMessage.Id:
-                message = new StateChangeMessage();
+            case ServerStateChangeMessage.Id:
+                message = new ServerStateChangeMessage();
                 message.Deserialize(ref bitBuffer);
                 break;
-            case GameStateMessage.Id:
-                message = new GameStateMessage();
+            case ServerGameStateMessage.Id:
+                message = new ServerGameStateMessage();
+                message.Deserialize(ref bitBuffer);
+                break;
+            case ServerChangeImageMessage.Id:
+                message = new ServerChangeImageMessage();
                 message.Deserialize(ref bitBuffer);
                 break;
             default:
