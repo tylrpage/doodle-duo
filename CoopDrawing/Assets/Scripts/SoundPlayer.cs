@@ -10,6 +10,7 @@ public class SoundPlayer : MonoBehaviour
     [SerializeField] private AudioClip successSound;
     [SerializeField] private AudioClip failSound;
     [SerializeField] private AudioSource pencilSource;
+    [SerializeField] private AudioClip connectionSound;
 
     private NetworkManager _networkManager;
     private StateManager _stateManager;
@@ -26,6 +27,10 @@ public class SoundPlayer : MonoBehaviour
             // No music on server, destroy ourselves
             Destroy(this);
             return;
+        }
+        else
+        {
+            _networkManager.Client.Connected += ClientOnConnected;
         }
         
         _stateManager = GameManager.Instance.GetService<StateManager>();
@@ -48,7 +53,7 @@ public class SoundPlayer : MonoBehaviour
                 if (!shouldMute)
                 {
                     pencilSource.mute = false;
-                    _timeToCheckForNextMute = Time.time + Constants.Step;
+                    _timeToCheckForNextMute = Time.time + Constants.Step * 2f;
                 }
                 if (shouldMute && Time.time >= _timeToCheckForNextMute)
                 {
@@ -62,6 +67,11 @@ public class SoundPlayer : MonoBehaviour
         }
         
         _previousDotPosition = _drawingManager.DotPosition;
+    }
+    
+    private void ClientOnConnected()
+    {
+        oneShotSource.PlayOneShot(connectionSound);
     }
 
     private void OnImageChanged()

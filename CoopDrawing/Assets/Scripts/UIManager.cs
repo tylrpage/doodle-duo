@@ -20,10 +20,12 @@ public class UIManager : MonoBehaviour, IService
     [SerializeField] private Color timerNormalColor;
     [SerializeField] private TMP_Text waitingText;
     [SerializeField] private TMP_Text restartingText;
+    [SerializeField] private TMP_Text connectingText;
 
     private DrawingManager _drawingManager;
     private StateManager _stateManager;
     private ImageManager _imageManager;
+    private NetworkManager _networkManager;
     private Vector2? _previousDotPosition;
 
     private void Awake()
@@ -39,10 +41,23 @@ public class UIManager : MonoBehaviour, IService
         
         _stateManager = GameManager.Instance.GetService<StateManager>();
         _stateManager.StateChanged += OnStateChanged;
-        OnStateChanged(_stateManager.CurrentState);
         
         _imageManager = GameManager.Instance.GetService<ImageManager>();
         _imageManager.ImageChanged += OnImageChanged;
+
+        _networkManager = GameManager.Instance.GetService<NetworkManager>();
+        if (!_networkManager.IsServer)
+        {
+            connectingText.gameObject.SetActive(true);
+            _networkManager.Client.Connected += ClientOnConnectionChanged;
+            _networkManager.Client.Disconnected += ClientOnConnectionChanged;
+            ClientOnConnectionChanged();
+        }
+    }
+
+    private void ClientOnConnectionChanged()
+    {
+        connectingText.gameObject.SetActive(!_networkManager.Client.IsConnected);
     }
 
     private void OnRoleChanged(ServerRoleAssignmentMessage.Role role)

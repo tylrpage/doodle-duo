@@ -233,6 +233,7 @@ MonoBehaviour:
   successSound: {fileID: 8300000, guid: 83a0908465331024197a9b5fc11774cb, type: 3}
   failSound: {fileID: 8300000, guid: 3fc9c6901ec6fce43933fed35f45acd7, type: 3}
   pencilSource: {fileID: 396083895}
+  connectionSound: {fileID: 8300000, guid: 1d95c82c80c8137429dcdc2316a4d6a3, type: 3}
 --- !u!4 &332295508
 Transform:
   m_ObjectHideFlags: 0
@@ -780,6 +781,7 @@ MonoBehaviour:
   timerNormalColor: {r: 1, g: 1, b: 1, a: 1}
   waitingText: {fileID: 930770457}
   restartingText: {fileID: 1981651403}
+  connectingText: {fileID: 678716070}
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -1685,7 +1687,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1078205997
 RectTransform:
   m_ObjectHideFlags: 0

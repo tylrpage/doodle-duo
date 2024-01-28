@@ -8,11 +8,11 @@ public class Client : MonoBehaviour
     public event Action Connected;
     public event Action Disconnected;
     public event Action<BitSerializable> MessageReceived;
+    public bool IsConnected => _connected;
     
     private UIManager _uiManager;
     private SimpleWebClient _ws;
     private bool _connected;
-    private StateManager _stateManager;
 
     private void Awake()
     {
@@ -25,11 +25,6 @@ public class Client : MonoBehaviour
         _ws.onDisconnect += WsOnonDisconnect;
         _ws.onConnect += WsOnonConnect;
         _ws.onError += WsOnonError;
-    }
-    
-    private void Start()
-    {
-        _stateManager = GameManager.Instance.GetService<StateManager>();
     }
 
     private void Update()
