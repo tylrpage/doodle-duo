@@ -11,13 +11,14 @@ public class PlayerDrawing : MonoBehaviour
     private DrawingManager _drawingManager;
     private int width;
     private int height;
+    private bool[,] expandKernel;
 
     void Start() {
         _drawingManager = GameManager.Instance.GetService<DrawingManager>();
         _drawingManager.DotMoved += AdvancePixelData;
         width = (int)_drawingManager.PageSize.x;
         height = (int)_drawingManager.PageSize.y;
-        
+
         pixelData = new bool[width, height];
         _drawingTexture = new Texture2D(width, height);
         for (int i = 0; i < width; i++) {
@@ -27,6 +28,7 @@ public class PlayerDrawing : MonoBehaviour
         }
         _drawingTexture.Apply();
         image.sprite = Sprite.Create(_drawingTexture, new Rect(0, 0, _drawingTexture.width, _drawingTexture.height), new Vector2(0.5f, 0.5f));
+        expandKernel = GenerateKernel(5);
     }
 
     void OnDisable() {
@@ -39,8 +41,7 @@ public class PlayerDrawing : MonoBehaviour
         int x = (int)dotPosition.x;
         int y = (int)dotPosition.y;
 
-        pixelData[x, y] = true;
-        _drawingTexture.SetPixel(x, y, Color.black);
+        ExpandAroundPixel(pixelData, x, y);
         _drawingTexture.Apply();
     }
 
@@ -49,6 +50,34 @@ public class PlayerDrawing : MonoBehaviour
         pixelData = new bool[width, height];
         foreach (Vector2 dotPosition in dotPositions) {
             AdvancePixelData(dotPosition);
+        }
+    }
+
+    // Creates a new kernel: A filled circle within a |size| x |size| grid.
+    private bool[,] GenerateKernel(int size) {
+        bool[,] kernel = new bool[size, size];
+        float radius = size / 2.0f;
+        Vector2 center = new Vector2(size / 2f, size / 2f);
+        for (int i = 0; i < kernel.GetLength(0); i++) {
+            for (int j = 0; j < kernel.GetLength(1); j++) {
+                Vector2 point = new Vector2(i, j);
+                float distance = Vector2.Distance(point, center);
+                kernel[i, j] = distance <= radius;
+            }
+        }
+        return kernel;
+    }
+
+    private void ExpandAroundPixel(bool[,] processedPixels, int x, int y) {
+        for (int i = -expandKernel.GetLength(0) / 2; i <= expandKernel.GetLength(0) / 2; i++) {
+            for (int j = -expandKernel.GetLength(1) / 2; j <= expandKernel.GetLength(1) / 2; j++) {
+                int expandedX = x + i;
+                int expandedY = y + j;
+                if (expandedX >= 0 && expandedX < width && expandedY >= 0 && expandedY < height) {
+                    processedPixels[expandedX, expandedY] = true;
+                    _drawingTexture.SetPixel(x, y, Color.black);
+                }
+            }
         }
     }
 
