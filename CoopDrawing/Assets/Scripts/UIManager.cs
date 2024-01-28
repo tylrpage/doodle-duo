@@ -143,6 +143,10 @@ public class UIManager : MonoBehaviour, IService
                 waitingText.gameObject.SetActive(true);
                 restartingText.gameObject.SetActive(false);
                 winnerText.gameObject.SetActive(false);
+                
+                // Hide knob colors until playing
+                horizontalKnob.SetAssigned(false);
+                verticalKnob.SetAssigned(false);
                 break;
             case StateManager.State.CountIn:
                 dot.gameObject.SetActive(false);

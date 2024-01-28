@@ -28,6 +28,7 @@ public class StateManager : MonoBehaviour, IService
     [SerializeField] private float endDurationBeforeWin;
     private NetworkManager _networkManager;
     private ImageManager _imageManager;
+    private Coroutine _waitAndChangeCoroutine;
 
     private void Awake()
     {
@@ -63,6 +64,15 @@ public class StateManager : MonoBehaviour, IService
         });
     }
 
+    private void ServerWaitAndChangeState(State newState, float waitTime)
+    {
+        if (_waitAndChangeCoroutine != null)
+        {
+            StopCoroutine(_waitAndChangeCoroutine);
+        }
+        _waitAndChangeCoroutine = StartCoroutine(ServerWaitAndChangeStateCoroutine(newState, waitTime));
+    }
+    
     private IEnumerator ServerWaitAndChangeStateCoroutine(State newState, float waitTime)
     {
         yield return new WaitForSeconds(waitTime);
@@ -76,6 +86,12 @@ public class StateManager : MonoBehaviour, IService
         switch (newState)
         {
             case State.Waiting:
+                // This state is also used to cancel the game when a player leaves, so make sure we are not running
+                // any coroutines to change state soon after
+                if (_waitAndChangeCoroutine != null)
+                {
+                    StopCoroutine(_waitAndChangeCoroutine);
+                }
                 break;
             case State.CountIn:
                 if (_networkManager.IsServer)
@@ -89,7 +105,7 @@ public class StateManager : MonoBehaviour, IService
 
                     float scaledCountInDuration = countInDuration *
                                                   (_imageManager.CurrentLevel.timeLimit / BaseTimeLimit);
-                    StartCoroutine(ServerWaitAndChangeStateCoroutine(State.Playing, scaledCountInDuration));
+                    ServerWaitAndChangeState(State.Playing, scaledCountInDuration);
                 }
                 break;
             case State.Playing:
@@ -119,26 +135,26 @@ public class StateManager : MonoBehaviour, IService
                     if (_imageManager.CurrentImageIndex == _imageManager.levels.Length - 1)
                     {
                         // They won!
-                        StartCoroutine(ServerWaitAndChangeStateCoroutine(State.Won, endDurationBeforeWin));
+                        ServerWaitAndChangeState(State.Won, endDurationBeforeWin);
                     }
                     else
                     {
                         // Give time to see the final image, then move onto the next image
-                        StartCoroutine(ServerWaitAndChangeStateCoroutine(State.CountIn, EndPictureDuration));
+                        ServerWaitAndChangeState(State.CountIn, EndPictureDuration);
                     }
                 }
                 break;
             case State.Restarting:
                 if (_networkManager.IsServer)
                 {
-                    StartCoroutine(RestartCoroutine());
+                    _waitAndChangeCoroutine = StartCoroutine(RestartCoroutine());
                 }
 
                 break;
             case State.Won:
                 if (_networkManager.IsServer)
                 {
-                    StartCoroutine(ServerWaitAndChangeStateCoroutine(State.CountIn, EndPictureDuration));
+                    ServerWaitAndChangeState(State.CountIn, EndPictureDuration);
                 }
 
                 break;

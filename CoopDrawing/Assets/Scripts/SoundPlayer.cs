@@ -86,6 +86,9 @@ public class SoundPlayer : MonoBehaviour
     {
         switch (newState)
         {
+            case StateManager.State.Waiting:
+                musicSource.Stop();
+                break;
             case StateManager.State.Playing:
                 pencilSource.Play();
                 pencilSource.mute = true;

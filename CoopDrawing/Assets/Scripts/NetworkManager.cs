@@ -13,7 +13,7 @@ public class NetworkManager : MonoBehaviour, IService
     public event Action<BitSerializable> MessageReceived;
     
     [SerializeField] private bool nonCloneIsServer;
-    [SerializeField] private bool connectToRemote;
+    [SerializeField] private bool editorConnectToRemote;
     
     public bool IsServer { get; private set; }
     public Client Client { get; private set; }
@@ -40,7 +40,7 @@ public class NetworkManager : MonoBehaviour, IService
             }
             else
             {
-                StartClient();
+                StartClient(editorConnectToRemote);
             }
         }
 #else
@@ -50,12 +50,13 @@ public class NetworkManager : MonoBehaviour, IService
         }
         else
         {
-            StartClient();
+            // non editor always connects to remote
+            StartClient(true);
         }
 #endif
     }
 
-    private void StartClient()
+    private void StartClient(bool connectToRemote)
     {
         IsServer = false;
         Client = gameObject.AddComponent<Client>();

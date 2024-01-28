@@ -111,6 +111,14 @@ public class Server : MonoBehaviour
         Debug.Log($"Client disconnected, id: {peerId}");
         
         ConnectedPeers.Remove(peerId);
+
+        // Not enough players anymore, go back to waiting
+        if (ConnectedPeers.Count < 2)
+        {
+            // Reset the image we are on
+            _imageManager.Reset();
+            _stateManager.ChangeServerState(StateManager.State.Waiting);
+        }
     }
 
     private void WebServerOnonData(int peerId, ArraySegment<byte> data)
