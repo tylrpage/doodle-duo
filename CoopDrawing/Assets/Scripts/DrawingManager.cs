@@ -1,8 +1,5 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 public class DrawingManager : MonoBehaviour, IService
 {
@@ -17,6 +14,7 @@ public class DrawingManager : MonoBehaviour, IService
     private ImageManager _imageManager;
     private Vector2 _clientUnsentInputTotal;
     private float _clientTimeSinceSentInput;
+    private bool _dotMovedSinceUpdate;
     
     private void Awake()
     {
@@ -47,6 +45,7 @@ public class DrawingManager : MonoBehaviour, IService
             case ServerGameStateMessage gameStateMessage:
                 // todo: smooth movement
                 DotPosition = gameStateMessage.DotPosition;
+                DotMoved?.Invoke(DotPosition);
                 break;
         }
     }
@@ -55,11 +54,15 @@ public class DrawingManager : MonoBehaviour, IService
     {
         if (_networkManager.IsServer)
         {
-            // Tell clients the dot position
-            _networkManager.Server.SendAll(new ServerGameStateMessage()
+            if (_dotMovedSinceUpdate)
             {
-                DotPosition = DotPosition,
-            });
+                // If the dot moved, tell clients the dot position
+                _dotMovedSinceUpdate = false;
+                _networkManager.Server.SendAll(new ServerGameStateMessage()
+                {
+                    DotPosition = DotPosition,
+                });
+            }
         }
         else
         {
@@ -96,12 +99,19 @@ public class DrawingManager : MonoBehaviour, IService
         }
     }
 
-    public void MoveDot(Vector2 input)
+    private void MoveDot(Vector2 input)
     {
+        // Ignore tiny values
+        if (input.magnitude < Mathf.Epsilon)
+        {
+            return;
+        }
+        
         DotPosition = new Vector2(
             Mathf.Clamp(DotPosition.x + input.x, 0, PageSize.x),
             Mathf.Clamp(DotPosition.y + input.y, 0, PageSize.y)
         );
+        _dotMovedSinceUpdate = true;
         
         DotMoved?.Invoke(DotPosition);
     }
