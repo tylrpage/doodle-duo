@@ -53,13 +53,14 @@ public class ImageData : MonoBehaviour
             int y = i / width;
             if (pixel.a > 0.5f) {
                 ExpandAroundPixel(processedPixels, x, y);
-            }
-            if (pixel.g == 1f) {
-                StartPositionPercentage = new Vector2((float)x / width, (float)y / height);
-            }
-            if (pixel.b == 1f) {
-                EndPositionPercentage = new Vector2((float)x / width, (float)y / height);
+                
+                if (pixel.g > 0.5f) {
+                    StartPositionPercentage = new Vector2((float)x / width, (float)y / height);
+                }
+                if (pixel.b > 0.5f) {
+                    EndPositionPercentage = new Vector2((float)x / width, (float)y / height);
 
+                }
             }
         }
         return processedPixels;
