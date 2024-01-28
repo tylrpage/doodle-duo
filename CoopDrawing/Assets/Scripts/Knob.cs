@@ -7,6 +7,10 @@ public class Knob : MonoBehaviour
 {
     [SerializeField] private Sprite[] knobSprites;
     [SerializeField] private Image image;
+    [SerializeField] private Color unassignedColor;
+    [SerializeField] private Color assignedColor;
+    [SerializeField] private float frameDuration;
+    
     private int currentSpriteIndex;
     private Coroutine spinCoroutine;
     bool spinning;
@@ -23,6 +27,11 @@ public class Knob : MonoBehaviour
         // } else {
         //     Stop();
         // }
+    }
+
+    public void SetAssigned(bool assigned)
+    {
+        image.color = assigned ? assignedColor : unassignedColor;
     }
 
     public void Increase() {
@@ -50,7 +59,7 @@ public class Knob : MonoBehaviour
         while (true) {
             currentSpriteIndex = (currentSpriteIndex + 1) % knobSprites.Length;
             image.sprite = knobSprites[currentSpriteIndex];
-            yield return new WaitForSeconds(0.1f);
+            yield return new WaitForSeconds(frameDuration);
         }
     }
 
@@ -59,7 +68,7 @@ public class Knob : MonoBehaviour
             currentSpriteIndex = (currentSpriteIndex - 1) % knobSprites.Length;
             if (currentSpriteIndex < 0) currentSpriteIndex += knobSprites.Length;
             image.sprite = knobSprites[currentSpriteIndex];
-            yield return new WaitForSeconds(0.1f);
+            yield return new WaitForSeconds(frameDuration);
         }
     }
 }

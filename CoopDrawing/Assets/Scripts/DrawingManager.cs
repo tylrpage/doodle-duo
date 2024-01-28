@@ -8,6 +8,7 @@ public class DrawingManager : MonoBehaviour, IService
     public event Action<Vector2> DotMoved;
     public event Action DotReset;
     public event Action DrawingFinished;
+    public event Action<ServerRoleAssignmentMessage.Role> RoleChanged;
 
     [field: SerializeField] public Vector2 PageSize { get; private set; }
     [SerializeField] private int dotSpeed;
@@ -70,6 +71,7 @@ public class DrawingManager : MonoBehaviour, IService
                 break;
             case ServerRoleAssignmentMessage roleAssignmentMessage:
                 _currentRole = roleAssignmentMessage.CurrentRole;
+                RoleChanged?.Invoke(roleAssignmentMessage.CurrentRole);
                 break;
         }
     }

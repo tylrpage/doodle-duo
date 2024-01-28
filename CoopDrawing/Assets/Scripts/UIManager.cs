@@ -32,6 +32,8 @@ public class UIManager : MonoBehaviour, IService
     private void Start()
     {
         _drawingManager = GameManager.Instance.GetService<DrawingManager>();
+        _drawingManager.RoleChanged += OnRoleChanged;
+        OnRoleChanged(ServerRoleAssignmentMessage.Role.None);
         
         _stateManager = GameManager.Instance.GetService<StateManager>();
         _stateManager.StateChanged += OnStateChanged;
@@ -39,6 +41,12 @@ public class UIManager : MonoBehaviour, IService
         
         _imageManager = GameManager.Instance.GetService<ImageManager>();
         _imageManager.ImageChanged += OnImageChanged;
+    }
+
+    private void OnRoleChanged(ServerRoleAssignmentMessage.Role role)
+    {
+        horizontalKnob.SetAssigned(role == ServerRoleAssignmentMessage.Role.Horizontal);
+        verticalKnob.SetAssigned(role == ServerRoleAssignmentMessage.Role.Vertical);
     }
 
     private void LateUpdate()
