@@ -1,11 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Knob : MonoBehaviour
 {
     [SerializeField] private Sprite[] knobSprites;
-    [SerializeField] private SpriteRenderer spriteRenderer;
+    [SerializeField] private Image image;
     private int currentSpriteIndex;
     private Coroutine spinCoroutine;
     bool spinning;
@@ -49,7 +50,7 @@ public class Knob : MonoBehaviour
     private IEnumerator ClockwiseSpin() {
         while (true) {
             currentSpriteIndex = (currentSpriteIndex + 1) % knobSprites.Length;
-            spriteRenderer.sprite = knobSprites[currentSpriteIndex];
+            image.sprite = knobSprites[currentSpriteIndex];
             yield return new WaitForSeconds(0.1f);
         }
     }
@@ -58,7 +59,7 @@ public class Knob : MonoBehaviour
         while (true) {
             currentSpriteIndex = (currentSpriteIndex - 1) % knobSprites.Length;
             if (currentSpriteIndex < 0) currentSpriteIndex += knobSprites.Length;
-            spriteRenderer.sprite = knobSprites[currentSpriteIndex];
+            image.sprite = knobSprites[currentSpriteIndex];
             yield return new WaitForSeconds(0.1f);
         }
     }
