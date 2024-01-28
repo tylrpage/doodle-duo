@@ -6,10 +6,17 @@ using UnityEngine;
 public class SoundPlayer : MonoBehaviour
 {
     [SerializeField] private AudioSource musicSource;
+    [SerializeField] private AudioSource oneShotSource;
+    [SerializeField] private AudioClip successSound;
+    [SerializeField] private AudioClip failSound;
+    [SerializeField] private AudioSource pencilSource;
 
     private NetworkManager _networkManager;
     private StateManager _stateManager;
     private ImageManager _imageManager;
+    private DrawingManager _drawingManager;
+    private Vector2? _previousDotPosition;
+    private float _timeToCheckForNextMute;
 
     private void Start()
     {
@@ -26,6 +33,35 @@ public class SoundPlayer : MonoBehaviour
         
         _imageManager = GameManager.Instance.GetService<ImageManager>();
         _imageManager.ImageChanged += OnImageChanged;
+        
+        _drawingManager = GameManager.Instance.GetService<DrawingManager>();
+    }
+
+    private void LateUpdate()
+    {
+        if (_stateManager.CurrentState == StateManager.State.Playing)
+        {
+            if (_previousDotPosition != null)
+            {
+                Vector2 delta = _drawingManager.DotPosition - _previousDotPosition.Value;
+                bool shouldMute = delta.sqrMagnitude <= Mathf.Epsilon;
+                if (!shouldMute)
+                {
+                    pencilSource.mute = false;
+                    _timeToCheckForNextMute = Time.time + Constants.Step;
+                }
+                if (shouldMute && Time.time >= _timeToCheckForNextMute)
+                {
+                    pencilSource.mute = true;
+                }
+            }
+        }
+        else
+        {
+            pencilSource.Stop();
+        }
+        
+        _previousDotPosition = _drawingManager.DotPosition;
     }
 
     private void OnImageChanged()
@@ -40,11 +76,15 @@ public class SoundPlayer : MonoBehaviour
     {
         switch (newState)
         {
+            case StateManager.State.Playing:
+                pencilSource.Play();
+                pencilSource.mute = true;
+                break;
             case StateManager.State.Restarting:
-                // todo: play fail sfx
+                oneShotSource.PlayOneShot(failSound);
                 break;
             case StateManager.State.Ending:
-                // todo: play win sfx
+                oneShotSource.PlayOneShot(successSound);
                 musicSource.Stop();
                 break;
         }

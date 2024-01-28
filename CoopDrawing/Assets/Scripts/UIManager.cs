@@ -136,6 +136,10 @@ public class UIManager : MonoBehaviour, IService
                 timerText.text = "Get Ready...";
                 waitingText.gameObject.SetActive(false);
                 restartingText.gameObject.SetActive(false);
+                
+                // Hide knob colors until playing
+                horizontalKnob.SetAssigned(false);
+                verticalKnob.SetAssigned(false);
                 break;
             case StateManager.State.Playing:
                 // Show stuff to play
