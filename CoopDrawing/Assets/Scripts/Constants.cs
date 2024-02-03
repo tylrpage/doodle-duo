@@ -7,6 +7,8 @@ public static class Constants
 
     public const int Tick = 30;
     public static readonly float Step = 1f / Tick;
+
+    public const int ReceiveTimeoutMS = 20000;
     
     public static BoundedRange[] InputDirectionBounds = new BoundedRange[]
     {

@@ -42,7 +42,7 @@ public class StateManager : MonoBehaviour, IService
 
         _imageManager = GameManager.Instance.GetService<ImageManager>();
     }
-    
+
     private void OnMessageReceived(BitSerializable message)
     {
         switch (message)

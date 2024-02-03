@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using JamesFrowen.SimpleWeb;
 using NetStack.Serialization;
 using UnityEngine;
@@ -13,12 +14,13 @@ public class Client : MonoBehaviour
     private UIManager _uiManager;
     private SimpleWebClient _ws;
     private bool _connected;
+    private Coroutine _heartbeatCoroutine;
 
     private void Awake()
     {
         _uiManager = GameManager.Instance.GetService<UIManager>();
         
-        TcpConfig tcpConfig = new TcpConfig(false, 5000, 20000);
+        TcpConfig tcpConfig = new TcpConfig(false, 5000, Constants.ReceiveTimeoutMS);
         _ws = SimpleWebClient.Create(16*1024, 5000, tcpConfig);
         
         _ws.onData += WsOnonData;
@@ -51,6 +53,8 @@ public class Client : MonoBehaviour
         Debug.Log("Connected!");
         
         _uiManager.SetStatusText("Connected!");
+
+        _heartbeatCoroutine = StartCoroutine(HeartbeatCoroutine());
         
         Connected?.Invoke();
     }
@@ -59,6 +63,12 @@ public class Client : MonoBehaviour
     {
         _connected = false;
         Debug.Log("Disconnected");
+        
+        if (_heartbeatCoroutine != null)
+        {
+            StopCoroutine(_heartbeatCoroutine);
+        }
+
         Disconnected?.Invoke();
     }
 
@@ -87,6 +97,8 @@ public class Client : MonoBehaviour
             case ServerRoleAssignmentMessage.Id:
                 message = new ServerRoleAssignmentMessage();
                 message.Deserialize(ref bitBuffer);
+                break;
+            case HeartbeatMessage.Id:
                 break;
             default:
                 Debug.LogError($"Received a message with an unknown id: {messageId}");
@@ -137,5 +149,15 @@ public class Client : MonoBehaviour
     {
         ArraySegment<byte> bytes = Writer.SerializeToByteSegment(serializable);
         _ws.Send(bytes);
+    }
+    
+    private IEnumerator HeartbeatCoroutine()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds((Constants.ReceiveTimeoutMS / 1000f) / 2);
+            
+            Send(new HeartbeatMessage());
+        }
     }
 }

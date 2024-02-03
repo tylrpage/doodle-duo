@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Security.Authentication;
 using JamesFrowen.SimpleWeb;
@@ -15,6 +16,7 @@ public class Server : MonoBehaviour
     public List<int> ConnectedPeers { get; private set; } = new List<int>();
     private StateManager _stateManager;
     private ImageManager _imageManager;
+    private Coroutine _heartbeatCoroutine;
 
     private void Awake()
     {
@@ -61,7 +63,7 @@ public class Server : MonoBehaviour
         SimpleWebServer webServer;
         
         SslConfig sslConfig;
-        TcpConfig tcpConfig = new TcpConfig(false, 5000, 20000);
+        TcpConfig tcpConfig = new TcpConfig(false, 5000, Constants.ReceiveTimeoutMS);
         if (Application.isBatchMode)
         {
             Debug.Log($"Setting up secure server");
@@ -80,6 +82,8 @@ public class Server : MonoBehaviour
         _listening = true;
         
         _uiManager.SetStatusText("Listening...");
+
+        _heartbeatCoroutine = StartCoroutine(HeartbeatCoroutine());
 
         return webServer;
     }
@@ -135,6 +139,8 @@ public class Server : MonoBehaviour
                 message = new ClientInputMessage();
                 message.Deserialize(ref bitBuffer);
                 break;
+            case HeartbeatMessage.Id:
+                break;
             default:
                 Debug.LogError($"Received a message with an unknown id: {messageId}");
                 break;
@@ -161,5 +167,15 @@ public class Server : MonoBehaviour
     {
         ArraySegment<byte> bytes = Writer.SerializeToByteSegment(serializable);
         _webServer.SendOne(peerId, bytes);
+    }
+    
+    private IEnumerator HeartbeatCoroutine()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds((Constants.ReceiveTimeoutMS / 1000f) / 2);
+            
+            SendAll(new HeartbeatMessage());
+        }
     }
 }
