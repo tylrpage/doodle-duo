@@ -42,23 +42,12 @@ public class UIManager : MonoBehaviour, IService
         
         _stateManager = GameManager.Instance.GetService<StateManager>();
         _stateManager.StateChanged += OnStateChanged;
+        OnStateChanged(_stateManager.CurrentState);
         
         _imageManager = GameManager.Instance.GetService<ImageManager>();
         _imageManager.ImageChanged += OnImageChanged;
 
         _networkManager = GameManager.Instance.GetService<NetworkManager>();
-        if (!_networkManager.IsServer)
-        {
-            connectingText.gameObject.SetActive(true);
-            _networkManager.Client.Connected += ClientOnConnectionChanged;
-            _networkManager.Client.Disconnected += ClientOnConnectionChanged;
-            ClientOnConnectionChanged();
-        }
-    }
-
-    private void ClientOnConnectionChanged()
-    {
-        connectingText.gameObject.SetActive(!_networkManager.Client.IsConnected);
     }
 
     private void OnRoleChanged(ServerRoleAssignmentMessage.Role role)
@@ -131,8 +120,26 @@ public class UIManager : MonoBehaviour, IService
 
     private void OnStateChanged(StateManager.State newState)
     {
+        // Only show connecting text if in connecting state
+        connectingText.gameObject.SetActive(newState == StateManager.State.Connecting);
+        
         switch (newState)
         {
+            case StateManager.State.Connecting:
+                // Hide everything
+                dot.gameObject.SetActive(false);
+                outlineImage.gameObject.SetActive(false);
+                finalImage.gameObject.SetActive(false);
+                drawingImage.gameObject.SetActive(false);
+                timerText.gameObject.SetActive(false);
+                waitingText.gameObject.SetActive(false);
+                restartingText.gameObject.SetActive(false);
+                winnerText.gameObject.SetActive(false);
+                
+                // Hide knob colors until playing
+                horizontalKnob.SetAssigned(false);
+                verticalKnob.SetAssigned(false);
+                break;
             case StateManager.State.Waiting:
                 // Hide everything
                 dot.gameObject.SetActive(false);

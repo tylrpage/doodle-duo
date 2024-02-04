@@ -11,6 +11,7 @@ public class StateManager : MonoBehaviour, IService
     
     public enum State : short
     {
+        Connecting,
         Waiting,
         CountIn,
         Playing,
@@ -39,6 +40,10 @@ public class StateManager : MonoBehaviour, IService
     {
         _networkManager = GameManager.Instance.GetService<NetworkManager>();
         _networkManager.MessageReceived += OnMessageReceived;
+        if (!_networkManager.IsServer)
+        {
+            _networkManager.Client.Disconnected += ClientOnDisconnected;
+        }
 
         _imageManager = GameManager.Instance.GetService<ImageManager>();
     }
@@ -77,6 +82,11 @@ public class StateManager : MonoBehaviour, IService
     {
         yield return new WaitForSeconds(waitTime);
         ChangeServerState(newState);
+    }
+    
+    private void ClientOnDisconnected()
+    {
+        ChangeState(State.Connecting);
     }
 
     private void ChangeState(State newState)
