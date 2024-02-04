@@ -2732,7 +2732,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <PageSize>k__BackingField: {x: 686, y: 382}
   dotSpeed: 40
-  requiredDistanceToEnd: 5
+  requiredDistanceToEnd: 8
   playerDrawing: {fileID: 1313837311}
 --- !u!114 &2042559161
 MonoBehaviour:
