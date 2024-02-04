@@ -62,7 +62,7 @@ public class StateManager : MonoBehaviour, IService
     public void ChangeServerState(State newState)
     {
         ChangeState(newState);
-        // Sync to clients
+        
         _networkManager.Server.SendAll(new ServerStateChangeMessage()
         {
             StateId = (short)CurrentState,
@@ -106,6 +106,13 @@ public class StateManager : MonoBehaviour, IService
             case State.CountIn:
                 if (_networkManager.IsServer)
                 {
+                    // In the case of the count in we want the client to change states before
+                    // changing the image do they don't see the next image briefly
+                    _networkManager.Server.SendAll(new ServerStateChangeMessage()
+                    {
+                        StateId = (short)CurrentState,
+                    });
+                    
                     // Get the next image
                     _imageManager.GetNextImage();
                     _networkManager.Server.SendAll(new ServerChangeImageMessage()
