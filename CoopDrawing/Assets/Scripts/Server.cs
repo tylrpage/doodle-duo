@@ -16,6 +16,7 @@ public class Server : MonoBehaviour
     public List<int> ConnectedPeers { get; private set; } = new List<int>();
     private StateManager _stateManager;
     private ImageManager _imageManager;
+    private DrawingManager _drawingManager;
     private Coroutine _heartbeatCoroutine;
 
     private void Awake()
@@ -38,6 +39,7 @@ public class Server : MonoBehaviour
         _stateManager.ChangeServerState(StateManager.State.Waiting);
         
         _imageManager = GameManager.Instance.GetService<ImageManager>();
+        _drawingManager = GameManager.Instance.GetService<DrawingManager>();
     }
 
     private void OnDestroy()
@@ -101,12 +103,21 @@ public class Server : MonoBehaviour
         }
         else
         {
-            // todo: handle spectators being able to join in the middle of a game
             // Send current state to connecting client
             Send(peerId, new ServerStateChangeMessage()
             {
                 StateId = (short)_stateManager.CurrentState,
             });
+
+            if (_stateManager.CurrentState != StateManager.State.Waiting)
+            {
+                // Give more info about the game that they would need to know
+                Send(peerId, new ServerPlayingStateMessage()
+                {
+                    ImageIndex = _imageManager.CurrentImageIndex,
+                    TimeLeft = _drawingManager.TimeLeft,
+                });   
+            }
         }
     }
 

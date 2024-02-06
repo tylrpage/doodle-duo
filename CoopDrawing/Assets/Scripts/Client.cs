@@ -100,6 +100,10 @@ public class Client : MonoBehaviour
                 break;
             case HeartbeatMessage.Id:
                 break;
+            case ServerPlayingStateMessage.Id:
+                message = new ServerPlayingStateMessage();
+                message.Deserialize(ref bitBuffer);
+                break;
             default:
                 Debug.LogError($"Received a message with an unknown id: {messageId}");
                 break;

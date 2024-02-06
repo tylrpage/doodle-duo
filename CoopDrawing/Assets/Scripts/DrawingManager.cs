@@ -73,6 +73,12 @@ public class DrawingManager : MonoBehaviour, IService
                 _currentRole = roleAssignmentMessage.CurrentRole;
                 RoleChanged?.Invoke(roleAssignmentMessage.CurrentRole);
                 break;
+            case ServerPlayingStateMessage playingStateMessage:
+                // We have drawing manager handle this message there is one sole handler
+                // and we can garuntee the image is changed first
+                _imageManager.ChangeImage(playingStateMessage.ImageIndex);
+                TimeLeft = playingStateMessage.TimeLeft;
+                break;
         }
     }
 

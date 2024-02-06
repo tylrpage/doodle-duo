@@ -80,4 +80,10 @@ public class ImageManager : MonoBehaviour, IService
         // Count in will increment this again to 0
         CurrentImageIndex = -1;
     }
+
+    public void ChangeImage(short newImageIndex)
+    {
+        CurrentImageIndex = newImageIndex;
+        ImageChanged?.Invoke();
+    }
 }
