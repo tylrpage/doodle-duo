@@ -104,6 +104,10 @@ public class Client : MonoBehaviour
                 message = new ServerPlayingStateMessage();
                 message.Deserialize(ref bitBuffer);
                 break;
+            case ServerUpdateWinCountAndAttempts.Id:
+                message = new ServerUpdateWinCountAndAttempts();
+                message.Deserialize(ref bitBuffer);
+                break; 
             default:
                 Debug.LogError($"Received a message with an unknown id: {messageId}");
                 break;

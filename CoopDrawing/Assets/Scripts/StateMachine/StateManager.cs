@@ -29,6 +29,7 @@ public class StateManager : MonoBehaviour, IService
     [SerializeField] private float endDurationBeforeWin;
     private NetworkManager _networkManager;
     private ImageManager _imageManager;
+    private DrawingManager _drawingManager;
     private Coroutine _waitAndChangeCoroutine;
 
     private void Awake()
@@ -46,6 +47,7 @@ public class StateManager : MonoBehaviour, IService
         }
 
         _imageManager = GameManager.Instance.GetService<ImageManager>();
+        _drawingManager = GameManager.Instance.GetService<DrawingManager>();
     }
 
     private void OnMessageReceived(BitSerializable message)
@@ -153,6 +155,8 @@ public class StateManager : MonoBehaviour, IService
                     {
                         // They won!
                         ServerWaitAndChangeState(State.Won, endDurationBeforeWin);
+                        _drawingManager.ServerIncrementWinCount();
+                        _drawingManager.ServerIncrementAttempts();
                     }
                     else
                     {
@@ -165,6 +169,8 @@ public class StateManager : MonoBehaviour, IService
                 if (_networkManager.IsServer)
                 {
                     _waitAndChangeCoroutine = StartCoroutine(RestartCoroutine());
+                    
+                    _drawingManager.ServerIncrementAttempts();
                 }
 
                 break;

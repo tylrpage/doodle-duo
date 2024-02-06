@@ -22,6 +22,8 @@ public class UIManager : MonoBehaviour, IService
     [SerializeField] private TMP_Text restartingText;
     [SerializeField] private TMP_Text connectingText;
     [SerializeField] private TMP_Text winnerText;
+    [SerializeField] private TMP_Text winCountText;
+    [SerializeField] private TMP_Text attemptCountText;
 
     private DrawingManager _drawingManager;
     private StateManager _stateManager;
@@ -111,6 +113,10 @@ public class UIManager : MonoBehaviour, IService
                 timerText.text = timeLeftNonNeg.ToString("F2");
             }   
         }
+        
+        // Update win and attempt count
+        winCountText.text = _drawingManager.WinCount.ToString();
+        attemptCountText.text = _drawingManager.Attempts.ToString();
     }
 
     public void SetStatusText(string text)

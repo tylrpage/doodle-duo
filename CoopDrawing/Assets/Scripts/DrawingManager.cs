@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using UnityEngine;
 
 public class DrawingManager : MonoBehaviour, IService
@@ -9,6 +10,8 @@ public class DrawingManager : MonoBehaviour, IService
     public event Action DotReset;
     public event Action DrawingFinished;
     public event Action<ServerRoleAssignmentMessage.Role> RoleChanged;
+    public uint WinCount { get; private set; }
+    public uint Attempts { get; private set; }
 
     [field: SerializeField] public Vector2 PageSize { get; private set; }
     [SerializeField] private int dotSpeed;
@@ -42,6 +45,23 @@ public class DrawingManager : MonoBehaviour, IService
 
         _imageManager = GameManager.Instance.GetService<ImageManager>();
         _imageManager.ImageChanged += OnImageChanged;
+
+        if (_networkManager.IsServer)
+        {
+            // check if file exists
+            if (!File.Exists(Constants.WinCountFilename))
+            {
+                WinCount = 0;
+            }
+            else
+            {
+                // Load win count
+                StreamReader reader = new StreamReader(Constants.WinCountFilename);
+                WinCount = uint.Parse(reader.ReadLine());
+                Attempts = uint.Parse(reader.ReadLine());
+                reader.Close();
+            }
+        }
     }
 
     private void OnMessageReceived(BitSerializable message)
@@ -55,7 +75,6 @@ public class DrawingManager : MonoBehaviour, IService
                 }
                 break;
             case ServerGameStateMessage gameStateMessage:
-                // todo: smooth movement?
                 if (gameStateMessage.DoReset)
                 {
                     DotPosition = _imageManager.CurrentLevel.start;
@@ -78,6 +97,10 @@ public class DrawingManager : MonoBehaviour, IService
                 // and we can garuntee the image is changed first
                 _imageManager.ChangeImage(playingStateMessage.ImageIndex);
                 TimeLeft = playingStateMessage.TimeLeft;
+                break;
+            case ServerUpdateWinCountAndAttempts updateMessage:
+                WinCount = updateMessage.WinCount;
+                Attempts = updateMessage.Attempts;
                 break;
         }
     }
@@ -188,5 +211,39 @@ public class DrawingManager : MonoBehaviour, IService
         
         // Set timer
         TimeLeft = _imageManager.CurrentLevel.timeLimit;
+    }
+
+    public void ServerIncrementWinCount()
+    {
+        WinCount++;
+        UpdateFile();
+        
+        _networkManager.Server.SendAll(new ServerUpdateWinCountAndAttempts()
+        {
+            WinCount = WinCount,
+            Attempts = Attempts,
+        });
+    }
+    
+    public void ServerIncrementAttempts()
+    {
+        Attempts++;
+        UpdateFile();
+        
+        _networkManager.Server.SendAll(new ServerUpdateWinCountAndAttempts()
+        {
+            WinCount = WinCount,
+            Attempts = Attempts,
+        });
+    }
+
+    private void UpdateFile()
+    {
+        // Save win count to file, create the file if needed
+        FileStream fs = File.Open(Constants.WinCountFilename, FileMode.OpenOrCreate, FileAccess.Write);
+        StreamWriter writer = new StreamWriter(fs);
+        writer.WriteLine(WinCount);
+        writer.WriteLine(Attempts);
+        writer.Close();
     }
 }

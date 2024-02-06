@@ -119,6 +119,13 @@ public class Server : MonoBehaviour
                 });   
             }
         }
+        
+        // Give them the win count
+        Send(peerId, new ServerUpdateWinCountAndAttempts()
+        {
+            WinCount = _drawingManager.WinCount,
+            Attempts = _drawingManager.Attempts,
+        });
     }
 
     private void WebServerOnonDisconnect(int peerId)
