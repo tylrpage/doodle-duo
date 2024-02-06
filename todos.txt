@@ -1,0 +1,5 @@
+future:
+fix fullscreen messing up the dot position
+make game easier? at least the first couple levels
+decrease dot speed a little?
+increase kernal size?
