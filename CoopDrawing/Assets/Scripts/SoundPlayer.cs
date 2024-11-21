@@ -30,7 +30,7 @@ public class SoundPlayer : MonoBehaviour
         }
         else
         {
-            _networkManager.Client.Connected += ClientOnConnected;
+            _networkManager.ClientConnected += OnClientConnected;
         }
         
         _stateManager = GameManager.Instance.GetService<StateManager>();
@@ -69,7 +69,7 @@ public class SoundPlayer : MonoBehaviour
         _previousDotPosition = _drawingManager.DotPosition;
     }
     
-    private void ClientOnConnected()
+    private void OnClientConnected()
     {
         oneShotSource.PlayOneShot(connectionSound);
     }

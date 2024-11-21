@@ -31,7 +31,10 @@ public class Client : MonoBehaviour
 
     private void Update()
     {
-        _ws.ProcessMessageQueue();
+        if (_connected)
+        {
+            _ws.ProcessMessageQueue();   
+        }
     }
     
     private void OnDestroy()

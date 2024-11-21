@@ -6,6 +6,7 @@ using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour, IService
 {
+    [SerializeField] private GameObject menuPanel;
     [SerializeField] private TMP_Text statusText;
     [SerializeField] private Transform dot;
     [SerializeField] private Transform page;
@@ -131,7 +132,7 @@ public class UIManager : MonoBehaviour, IService
         
         switch (newState)
         {
-            case StateManager.State.Connecting:
+            case StateManager.State.Menu:
                 // Hide everything
                 dot.gameObject.SetActive(false);
                 outlineImage.gameObject.SetActive(false);
@@ -142,20 +143,27 @@ public class UIManager : MonoBehaviour, IService
                 restartingText.gameObject.SetActive(false);
                 winnerText.gameObject.SetActive(false);
                 
+                menuPanel.gameObject.SetActive(true);
+                break;
+            case StateManager.State.Connecting:
+                menuPanel.gameObject.SetActive(false);
+                
                 // Hide knob colors until playing
                 horizontalKnob.SetAssigned(false);
                 verticalKnob.SetAssigned(false);
                 break;
             case StateManager.State.Waiting:
-                // Hide everything
+                // Hide everything again, since we could be coming from the game playing
+                menuPanel.gameObject.SetActive(false);
                 dot.gameObject.SetActive(false);
                 outlineImage.gameObject.SetActive(false);
                 finalImage.gameObject.SetActive(false);
                 drawingImage.gameObject.SetActive(false);
                 timerText.gameObject.SetActive(false);
-                waitingText.gameObject.SetActive(true);
                 restartingText.gameObject.SetActive(false);
                 winnerText.gameObject.SetActive(false);
+                
+                waitingText.gameObject.SetActive(true);
                 
                 // Hide knob colors until playing
                 horizontalKnob.SetAssigned(false);

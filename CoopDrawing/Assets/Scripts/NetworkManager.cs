@@ -11,6 +11,8 @@ public class NetworkManager : MonoBehaviour, IService
     public event Action Sided;
     public bool IsSided { get; private set; }
     public event Action<BitSerializable> MessageReceived;
+    public event Action ClientConnected;
+    public event Action ClientDisconnected;
     
     [SerializeField] private bool nonCloneIsServer;
     [SerializeField] private bool editorConnectToRemote;
@@ -33,15 +35,16 @@ public class NetworkManager : MonoBehaviour, IService
         }
         else
         {
-            string arg = ClonesManager.GetArgument();
-            if (arg.Equals("server"))
-            {
-                StartServer();
-            }
-            else
-            {
-                StartClient(editorConnectToRemote);
-            }
+            // todo: call these when appropriate, not just immediately at start
+            // string arg = ClonesManager.GetArgument();
+            // if (arg.Equals("server"))
+            // {
+            //     StartServer();
+            // }
+            // else
+            // {
+            //     StartClient(editorConnectToRemote);
+            // }
         }
 #else
         if (Application.isBatchMode)
@@ -61,6 +64,8 @@ public class NetworkManager : MonoBehaviour, IService
         IsServer = false;
         Client = gameObject.AddComponent<Client>();
         Client.MessageReceived += OnClientOrServerMessageReceived;
+        Client.Connected += () => ClientConnected?.Invoke();
+        Client.Disconnected += () => ClientDisconnected?.Invoke();
         Client.Connect(connectToRemote);
         
         Sided?.Invoke();
