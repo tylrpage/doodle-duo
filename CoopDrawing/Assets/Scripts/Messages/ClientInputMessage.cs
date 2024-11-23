@@ -4,7 +4,7 @@ using NetStack.Quantization;
 using NetStack.Serialization;
 using UnityEngine;
 
-public struct ClientInputMessage : BitSerializable
+public struct ClientInputMessage : IBitSerializable
 {
     public const ushort Id = 2;
 

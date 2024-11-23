@@ -64,7 +64,7 @@ public class DrawingManager : MonoBehaviour, IService
         }
     }
 
-    private void OnMessageReceived(BitSerializable message)
+    private void OnMessageReceived(IBitSerializable message)
     {
         switch (message)
         {

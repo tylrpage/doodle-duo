@@ -4,7 +4,7 @@ using NetStack.Quantization;
 using NetStack.Serialization;
 using UnityEngine;
 
-public struct HeartbeatMessage : BitSerializable
+public struct HeartbeatMessage : IBitSerializable
 {
     public const ushort Id = 6;
 

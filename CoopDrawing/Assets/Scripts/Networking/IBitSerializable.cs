@@ -1,7 +1,7 @@
 using System;
 using NetStack.Serialization;
 
-public interface BitSerializable
+public interface IBitSerializable
 {
     void Serialize(ref BitBuffer data);
     void Deserialize(ref BitBuffer data);
@@ -9,7 +9,7 @@ public interface BitSerializable
 
 public static class Writer
 {
-    public static ArraySegment<byte> SerializeToByteSegment(BitSerializable message)
+    public static ArraySegment<byte> SerializeToByteSegment(IBitSerializable message)
     {
         BitBuffer bitBuffer = BufferPool.GetBitBuffer();
         byte[] byteBuffer = BufferPool.GetByteBuffer();

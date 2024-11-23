@@ -2,13 +2,14 @@
 using System.Collections;
 using JamesFrowen.SimpleWeb;
 using NetStack.Serialization;
+using Networking;
 using UnityEngine;
 
-public class Client : MonoBehaviour
+public class WebClient : MonoBehaviour, IClient
 {
     public event Action Connected;
     public event Action Disconnected;
-    public event Action<BitSerializable> MessageReceived;
+    public event Action<IBitSerializable> MessageReceived;
     public bool IsConnected => _connected;
     
     private UIManager _uiManager;
@@ -81,7 +82,7 @@ public class Client : MonoBehaviour
         bitBuffer.FromArray(data.Array, data.Count);
         ushort messageId = bitBuffer.PeekUShort();
         
-        BitSerializable message = null;
+        IBitSerializable message = null;
         // todo: get rid of this boilerplate somehow
         switch (messageId)
         {
@@ -156,12 +157,17 @@ public class Client : MonoBehaviour
         _uiManager.SetStatusText("Connecting...");
     }
 
-    public void Send(BitSerializable serializable)
+    public void Send(IBitSerializable serializable)
     {
         ArraySegment<byte> bytes = Writer.SerializeToByteSegment(serializable);
         _ws.Send(bytes);
     }
-    
+
+    public void AddListener(Action<IBitSerializable> listener)
+    {
+        throw new NotImplementedException();
+    }
+
     private IEnumerator HeartbeatCoroutine()
     {
         while (true)

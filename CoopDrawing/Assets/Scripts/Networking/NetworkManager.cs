@@ -10,7 +10,7 @@ public class NetworkManager : MonoBehaviour, IService
     // Don't forget to check if it already IsSided when subbing
     public event Action Sided;
     public bool IsSided { get; private set; }
-    public event Action<BitSerializable> MessageReceived;
+    public event Action<IBitSerializable> MessageReceived;
     public event Action ClientConnected;
     public event Action ClientDisconnected;
     
@@ -18,8 +18,8 @@ public class NetworkManager : MonoBehaviour, IService
     [SerializeField] private bool editorConnectToRemote;
     
     public bool IsServer { get; private set; }
-    public Client Client { get; private set; }
-    public Server Server { get; private set; }
+    public WebClient Client { get; private set; }
+    public WebServer Server { get; private set; }
     
     private void Awake()
     {
@@ -62,7 +62,7 @@ public class NetworkManager : MonoBehaviour, IService
     private void StartClient(bool connectToRemote)
     {
         IsServer = false;
-        Client = gameObject.AddComponent<Client>();
+        Client = gameObject.AddComponent<WebClient>();
         Client.MessageReceived += OnClientOrServerMessageReceived;
         Client.Connected += () => ClientConnected?.Invoke();
         Client.Disconnected += () => ClientDisconnected?.Invoke();
@@ -72,7 +72,7 @@ public class NetworkManager : MonoBehaviour, IService
         IsSided = true;
     }
 
-    private void OnClientOrServerMessageReceived(BitSerializable message)
+    private void OnClientOrServerMessageReceived(IBitSerializable message)
     {
         MessageReceived?.Invoke(message);
     }
@@ -80,7 +80,7 @@ public class NetworkManager : MonoBehaviour, IService
     private void StartServer()
     {
         IsServer = true;
-        Server = gameObject.AddComponent<Server>();
+        Server = gameObject.AddComponent<WebServer>();
         Server.MessageReceived += OnClientOrServerMessageReceived;
         
         Sided?.Invoke();

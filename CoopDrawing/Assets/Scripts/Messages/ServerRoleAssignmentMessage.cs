@@ -2,7 +2,7 @@ using NetStack.Quantization;
 using NetStack.Serialization;
 using UnityEngine;
 
-public struct ServerRoleAssignmentMessage : BitSerializable
+public struct ServerRoleAssignmentMessage : IBitSerializable
 {
     public const ushort Id = 5;
 

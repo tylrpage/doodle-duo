@@ -1,6 +1,6 @@
 ﻿using NetStack.Serialization;
 
-public struct ServerPlayingStateMessage : BitSerializable
+public struct ServerPlayingStateMessage : IBitSerializable
 {
     public const ushort Id = 4;
 

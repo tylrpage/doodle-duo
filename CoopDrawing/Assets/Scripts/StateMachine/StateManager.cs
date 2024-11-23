@@ -51,7 +51,7 @@ public class StateManager : MonoBehaviour, IService
         _drawingManager = GameManager.Instance.GetService<DrawingManager>();
     }
 
-    private void OnMessageReceived(BitSerializable message)
+    private void OnMessageReceived(IBitSerializable message)
     {
         switch (message)
         {

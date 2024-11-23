@@ -4,11 +4,14 @@ using System.Collections.Generic;
 using System.Security.Authentication;
 using JamesFrowen.SimpleWeb;
 using NetStack.Serialization;
+using Networking;
 using UnityEngine;
 
-public class Server : MonoBehaviour
+public class WebServer : MonoBehaviour, IServer
 {
-    public event Action<BitSerializable> MessageReceived;
+    public event Action<IBitSerializable> MessageReceived;
+    public event IServer.PeerConnectedDelegate PeerConnected;
+    public event IServer.PeerDisconnectedDelegate PeerDisconnected;
     
     private SimpleWebServer _webServer;
     private bool _listening;
@@ -126,6 +129,8 @@ public class Server : MonoBehaviour
             WinCount = _drawingManager.WinCount,
             Attempts = _drawingManager.Attempts,
         });
+        
+        PeerConnected?.Invoke(peerId);
     }
 
     private void WebServerOnonDisconnect(int peerId)
@@ -141,6 +146,8 @@ public class Server : MonoBehaviour
             _imageManager.Reset();
             _stateManager.ChangeServerState(StateManager.State.Waiting);
         }
+        
+        PeerDisconnected?.Invoke(peerId);
     }
 
     private void WebServerOnonData(int peerId, ArraySegment<byte> data)
@@ -149,7 +156,7 @@ public class Server : MonoBehaviour
         bitBuffer.FromArray(data.Array, data.Count);
         ushort messageId = bitBuffer.PeekUShort();
 
-        BitSerializable message = null;
+        IBitSerializable message = null;
         // todo: get rid of this boilerplate somehow
         switch (messageId)
         {
@@ -175,18 +182,23 @@ public class Server : MonoBehaviour
         Debug.LogError($"Web Server Error, Id: {connectionId}, {exception.Message}");
     }
     
-    public void SendAll(BitSerializable serializable)
+    public void SendAll(IBitSerializable serializable)
     {
         ArraySegment<byte> bytes = Writer.SerializeToByteSegment(serializable);
         _webServer.SendAll(ConnectedPeers, bytes);
     }
-    
-    public void Send(int peerId, BitSerializable serializable)
+
+    public void Send(int peerId, IBitSerializable serializable)
     {
         ArraySegment<byte> bytes = Writer.SerializeToByteSegment(serializable);
         _webServer.SendOne(peerId, bytes);
     }
-    
+
+    public void AddListener(IServer.MessageReceivedDelegate listener)
+    {
+        throw new NotImplementedException();
+    }
+
     private IEnumerator HeartbeatCoroutine()
     {
         while (true)

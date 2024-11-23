@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using NetStack.Serialization;
 using UnityEngine;
 
-public struct ServerUpdateWinCountAndAttempts : BitSerializable
+public struct ServerUpdateWinCountAndAttempts : IBitSerializable
 {
     public const ushort Id = 8;
 

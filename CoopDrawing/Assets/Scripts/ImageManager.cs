@@ -52,7 +52,7 @@ public class ImageManager : MonoBehaviour, IService
         _networkManager.MessageReceived += OnMessageReceived;
     }
 
-    private void OnMessageReceived(BitSerializable message)
+    private void OnMessageReceived(IBitSerializable message)
     {
         switch (message)
         {
