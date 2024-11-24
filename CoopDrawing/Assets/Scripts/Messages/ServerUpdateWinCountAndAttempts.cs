@@ -5,23 +5,17 @@ using UnityEngine;
 
 public struct ServerUpdateWinCountAndAttempts : IBitSerializable
 {
-    public const ushort Id = 8;
-
     public uint WinCount;
     public uint Attempts;
 
     public void Serialize(ref BitBuffer data)
     {
-        data.AddUShort(Id);
-
         data.AddUInt(WinCount);
         data.AddUInt(Attempts);
     }
 
     public void Deserialize(ref BitBuffer data)
     {
-        data.ReadUShort();
-
         WinCount = data.ReadUInt();
         Attempts = data.ReadUInt();
     }

@@ -5,21 +5,15 @@ using UnityEngine;
 
 public struct ServerStateChangeMessage : IBitSerializable
 {
-    public const ushort Id = 1;
-
     public short StateId;
 
     public void Serialize(ref BitBuffer data)
     {
-        data.AddUShort(Id);
-
         data.AddShort(StateId);
     }
 
     public void Deserialize(ref BitBuffer data)
     {
-        data.ReadUShort();
-
         StateId = data.ReadShort();
     }
 }

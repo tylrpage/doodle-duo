@@ -6,15 +6,11 @@ using UnityEngine;
 
 public struct HeartbeatMessage : IBitSerializable
 {
-    public const ushort Id = 6;
-
     public void Serialize(ref BitBuffer data)
     {
-        data.AddUShort(Id);
     }
 
     public void Deserialize(ref BitBuffer data)
     {
-        data.ReadUShort();
     }
 }

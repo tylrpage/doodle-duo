@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using JamesFrowen.SimpleWeb;
 using NetStack.Serialization;
 using Networking;
@@ -14,8 +15,12 @@ public class WebClient : MonoBehaviour, IClient
     
     private UIManager _uiManager;
     private SimpleWebClient _ws;
+    private Messenger _messenger = new Messenger();
     private bool _connected;
     private Coroutine _heartbeatCoroutine;
+    
+    // todo move this into a client message router, so that web client and local client can share logic in AddListener(), Remove, on data receive
+    public Dictionary<Type, IClientMessageListener> _messageListeners = new Dictionary<Type, IClientMessageListener>();
 
     private void Awake()
     {
@@ -80,46 +85,12 @@ public class WebClient : MonoBehaviour, IClient
     {
         BitBuffer bitBuffer = BufferPool.GetBitBuffer();
         bitBuffer.FromArray(data.Array, data.Count);
-        ushort messageId = bitBuffer.PeekUShort();
         
-        IBitSerializable message = null;
-        // todo: get rid of this boilerplate somehow
-        switch (messageId)
+        IBitSerializable message = _messenger.Receive(bitBuffer);
+        Type type = message.GetType();
+        if (_messageListeners.TryGetValue(type, out IClientMessageListener messageListener))
         {
-            case ServerStateChangeMessage.Id:
-                message = new ServerStateChangeMessage();
-                message.Deserialize(ref bitBuffer);
-                break;
-            case ServerGameStateMessage.Id:
-                message = new ServerGameStateMessage();
-                message.Deserialize(ref bitBuffer);
-                break;
-            case ServerChangeImageMessage.Id:
-                message = new ServerChangeImageMessage();
-                message.Deserialize(ref bitBuffer);
-                break;
-            case ServerRoleAssignmentMessage.Id:
-                message = new ServerRoleAssignmentMessage();
-                message.Deserialize(ref bitBuffer);
-                break;
-            case HeartbeatMessage.Id:
-                break;
-            case ServerPlayingStateMessage.Id:
-                message = new ServerPlayingStateMessage();
-                message.Deserialize(ref bitBuffer);
-                break;
-            case ServerUpdateWinCountAndAttempts.Id:
-                message = new ServerUpdateWinCountAndAttempts();
-                message.Deserialize(ref bitBuffer);
-                break; 
-            default:
-                Debug.LogError($"Received a message with an unknown id: {messageId}");
-                break;
-        }
-        
-        if (message != null)
-        {
-            MessageReceived?.Invoke(message);
+            messageListener.SendMessage(message);
         }
     }
     
@@ -159,13 +130,33 @@ public class WebClient : MonoBehaviour, IClient
 
     public void Send(IBitSerializable serializable)
     {
-        ArraySegment<byte> bytes = Writer.SerializeToByteSegment(serializable);
+        BitBuffer bitBuffer = _messenger.Serialize(serializable);
+        byte[] byteBuffer = BufferPool.GetByteBuffer();
+        bitBuffer.ToArray(byteBuffer);
+        ArraySegment<byte> bytes = new ArraySegment<byte>(byteBuffer, 0, bitBuffer.Length);
         _ws.Send(bytes);
     }
 
-    public void AddListener(Action<IBitSerializable> listener)
+    public void AddListener<T>(IClient.MessageReceivedDelegate<T> listener) where T : IBitSerializable
     {
-        throw new NotImplementedException();
+        Type type = typeof(T);
+        if (!_messageListeners.TryGetValue(type, out IClientMessageListener messageListener))
+        {
+            _messageListeners[typeof(T)] = messageListener = new ClientMessageListener<T>();
+            _messageListeners.Add(type, messageListener);
+        }
+        ClientMessageListener<T> typedHandler = (ClientMessageListener<T>) messageListener;
+        typedHandler.AddListener(listener);
+    }
+
+    public void RemoveListener<T>(IClient.MessageReceivedDelegate<T> listener) where T : IBitSerializable
+    {
+        Type type = typeof(T);
+        if (_messageListeners.TryGetValue(type, out IClientMessageListener messageListener))
+        {
+            ClientMessageListener<T> typedListener = (ClientMessageListener<T>) messageListener;
+            typedListener.RemoveListener(listener);
+        }
     }
 
     private IEnumerator HeartbeatCoroutine()

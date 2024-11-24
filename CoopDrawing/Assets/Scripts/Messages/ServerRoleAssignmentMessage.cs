@@ -4,8 +4,6 @@ using UnityEngine;
 
 public struct ServerRoleAssignmentMessage : IBitSerializable
 {
-    public const ushort Id = 5;
-
     public enum Role : byte
     {
         None,
@@ -16,15 +14,11 @@ public struct ServerRoleAssignmentMessage : IBitSerializable
 
     public void Serialize(ref BitBuffer data)
     {
-        data.AddUShort(Id);
-
         data.AddByte((byte)CurrentRole);
     }
 
     public void Deserialize(ref BitBuffer data)
     {
-        data.ReadUShort();
-
         CurrentRole = (Role)data.ReadByte();
     }
 }

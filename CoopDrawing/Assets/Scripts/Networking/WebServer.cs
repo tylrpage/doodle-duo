@@ -14,6 +14,7 @@ public class WebServer : MonoBehaviour, IServer
     public event IServer.PeerDisconnectedDelegate PeerDisconnected;
     
     private SimpleWebServer _webServer;
+    private Messenger _messenger;
     private bool _listening;
     private UIManager _uiManager;
     public List<int> ConnectedPeers { get; private set; } = new List<int>();
@@ -21,6 +22,9 @@ public class WebServer : MonoBehaviour, IServer
     private ImageManager _imageManager;
     private DrawingManager _drawingManager;
     private Coroutine _heartbeatCoroutine;
+    
+    // todo move this into a server message router, so that web server and local server can share logic in AddListener(), Remove, on data receive
+    public Dictionary<Type, IServerMessageListener> _messageListeners = new Dictionary<Type, IServerMessageListener>();
 
     private void Awake()
     {
@@ -154,26 +158,12 @@ public class WebServer : MonoBehaviour, IServer
     {
         BitBuffer bitBuffer = BufferPool.GetBitBuffer();
         bitBuffer.FromArray(data.Array, data.Count);
-        ushort messageId = bitBuffer.PeekUShort();
-
-        IBitSerializable message = null;
-        // todo: get rid of this boilerplate somehow
-        switch (messageId)
+        
+        IBitSerializable message = _messenger.Receive(bitBuffer);
+        Type type = message.GetType();
+        if (_messageListeners.TryGetValue(type, out IServerMessageListener messageListener))
         {
-            case ClientInputMessage.Id:
-                message = new ClientInputMessage();
-                message.Deserialize(ref bitBuffer);
-                break;
-            case HeartbeatMessage.Id:
-                break;
-            default:
-                Debug.LogError($"Received a message with an unknown id: {messageId}");
-                break;
-        }
-
-        if (message != null)
-        {
-            MessageReceived?.Invoke(message);
+            messageListener.SendMessage(peerId, message);
         }
     }
     
@@ -184,19 +174,42 @@ public class WebServer : MonoBehaviour, IServer
     
     public void SendAll(IBitSerializable serializable)
     {
-        ArraySegment<byte> bytes = Writer.SerializeToByteSegment(serializable);
+        BitBuffer bitBuffer = _messenger.Serialize(serializable);
+        byte[] byteBuffer = BufferPool.GetByteBuffer();
+        bitBuffer.ToArray(byteBuffer);
+        ArraySegment<byte> bytes = new ArraySegment<byte>(byteBuffer, 0, bitBuffer.Length);
         _webServer.SendAll(ConnectedPeers, bytes);
     }
 
     public void Send(int peerId, IBitSerializable serializable)
     {
-        ArraySegment<byte> bytes = Writer.SerializeToByteSegment(serializable);
+        BitBuffer bitBuffer = _messenger.Serialize(serializable);
+        byte[] byteBuffer = BufferPool.GetByteBuffer();
+        bitBuffer.ToArray(byteBuffer);
+        ArraySegment<byte> bytes = new ArraySegment<byte>(byteBuffer, 0, bitBuffer.Length);
         _webServer.SendOne(peerId, bytes);
     }
 
-    public void AddListener(IServer.MessageReceivedDelegate listener)
+    public void AddListener<T>(IServer.MessageReceivedDelegate<T> listener) where T : IBitSerializable
     {
-        throw new NotImplementedException();
+        Type type = typeof(T);
+        if (!_messageListeners.TryGetValue(type, out IServerMessageListener messageListener))
+        {
+            _messageListeners[typeof(T)] = messageListener = new ServerMessageListener<T>();
+            _messageListeners.Add(type, messageListener);
+        }
+        ServerMessageListener<T> typedHandler = (ServerMessageListener<T>) messageListener;
+        typedHandler.AddListener(listener);
+    }
+    
+    public void RemoveListener<T>(IServer.MessageReceivedDelegate<T> listener) where T : IBitSerializable
+    {
+        Type type = typeof(T);
+        if (_messageListeners.TryGetValue(type, out IServerMessageListener messageListener))
+        {
+            ServerMessageListener<T> typedListener = (ServerMessageListener<T>) messageListener;
+            typedListener.RemoveListener(listener);
+        }
     }
 
     private IEnumerator HeartbeatCoroutine()

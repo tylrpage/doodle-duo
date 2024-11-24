@@ -7,6 +7,10 @@ namespace Networking
         public event Action Connected;
         public event Action Disconnected;
         public void Send(IBitSerializable message);
-        public void AddListener(Action<IBitSerializable> listener);
+        
+        public delegate void MessageReceivedDelegate<T>(T message) where T : IBitSerializable;
+        public void AddListener<T>(MessageReceivedDelegate<T> listener) where T : IBitSerializable;
+        
+        public void RemoveListener<T>(MessageReceivedDelegate<T> listener) where T : IBitSerializable;
     }
 }

@@ -12,7 +12,9 @@ namespace Networking
         
         public void Send(int peerID, IBitSerializable message);
         
-        public delegate void MessageReceivedDelegate(int peerID, IBitSerializable message);
-        public void AddListener(MessageReceivedDelegate listener);
+        public delegate void MessageReceivedDelegate<T>(int peerID, T message) where T : IBitSerializable;
+        public void AddListener<T>(MessageReceivedDelegate<T> listener) where T : IBitSerializable;
+        
+        public void RemoveListener<T>(MessageReceivedDelegate<T> listener) where T : IBitSerializable;
     }
 }
