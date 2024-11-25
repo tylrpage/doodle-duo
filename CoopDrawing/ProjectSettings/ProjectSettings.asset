@@ -569,6 +569,7 @@ PlayerSettings:
   webGLThreadsSupport: 0
   webGLDecompressionFallback: 0
   scriptingDefineSymbols:
+    1: STEAMWORKS_NET
     13: SIMPLEWEB_LOG_ENABLED
   additionalCompilerArguments: {}
   platformArchitecture: {}
