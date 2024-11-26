@@ -41,7 +41,7 @@ public class StateManager : MonoBehaviour, IService
     private void Start()
     {
         _networkManager = GameManager.Instance.GetService<NetworkManager>();
-        _networkManager.MessageReceived += OnMessageReceived;
+        _networkManager.ClientMessageRouter.AddListener<ServerStateChangeMessage>(OnServerStateChangeMessage);
         if (!_networkManager.IsServer)
         {
             _networkManager.ClientDisconnected += OnClientDisconnected;
@@ -51,14 +51,14 @@ public class StateManager : MonoBehaviour, IService
         _drawingManager = GameManager.Instance.GetService<DrawingManager>();
     }
 
-    private void OnMessageReceived(IBitSerializable message)
+    private void OnDestroy()
     {
-        switch (message)
-        {
-            case ServerStateChangeMessage stateChangeMessage:
-                ChangeState((State)stateChangeMessage.StateId);
-                break;
-        }
+        _networkManager.ClientMessageRouter.RemoveListener<ServerStateChangeMessage>(OnServerStateChangeMessage);
+    }
+
+    private void OnServerStateChangeMessage(ServerStateChangeMessage stcm)
+    {
+        ChangeState((State)stcm.StateId);
     }
     
     // Server only
@@ -66,7 +66,7 @@ public class StateManager : MonoBehaviour, IService
     {
         ChangeState(newState);
         
-        _networkManager.Server.SendAll(new ServerStateChangeMessage()
+        _networkManager.SendToAllClient(new ServerStateChangeMessage()
         {
             StateId = (short)CurrentState,
         });
@@ -111,14 +111,14 @@ public class StateManager : MonoBehaviour, IService
                 {
                     // In the case of the count in we want the client to change states before
                     // changing the image do they don't see the next image briefly
-                    _networkManager.Server.SendAll(new ServerStateChangeMessage()
+                    _networkManager.SendToAllClient(new ServerStateChangeMessage()
                     {
                         StateId = (short)CurrentState,
                     });
                     
                     // Get the next image
                     _imageManager.GetNextImage();
-                    _networkManager.Server.SendAll(new ServerChangeImageMessage()
+                    _networkManager.SendToAllClient(new ServerChangeImageMessage()
                     {
                         ImageIndex = _imageManager.CurrentImageIndex,
                     });
@@ -132,9 +132,9 @@ public class StateManager : MonoBehaviour, IService
                 if (_networkManager.IsServer)
                 {
                     // Assign roles randomly
-                    List<int> connectedPeers = _networkManager.Server.ConnectedPeers;
+                    List<int> connectedPeers = _networkManager.ConnectedPeers;
                     int horizontalPeerId = connectedPeers[Random.Range(0, connectedPeers.Count)];
-                    _networkManager.Server.Send(horizontalPeerId, new ServerRoleAssignmentMessage()
+                    _networkManager.SendToClient(horizontalPeerId, new ServerRoleAssignmentMessage()
                     {
                         CurrentRole = ServerRoleAssignmentMessage.Role.Horizontal,
                     });
@@ -142,7 +142,7 @@ public class StateManager : MonoBehaviour, IService
                     List<int> availablePeers = connectedPeers.Where(x => x != horizontalPeerId).ToList();
                     // If there is only one left in the list, go with the first person
                     int verticalPeerId = availablePeers[Random.Range(0, availablePeers.Count)];
-                    _networkManager.Server.Send(verticalPeerId, new ServerRoleAssignmentMessage()
+                    _networkManager.SendToClient(verticalPeerId, new ServerRoleAssignmentMessage()
                     {
                         CurrentRole = ServerRoleAssignmentMessage.Role.Vertical,
                     });

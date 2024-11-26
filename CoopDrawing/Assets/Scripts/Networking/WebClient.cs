@@ -10,17 +10,13 @@ public class WebClient : MonoBehaviour, IClient
 {
     public event Action Connected;
     public event Action Disconnected;
-    public event Action<IBitSerializable> MessageReceived;
+    public event Action<BitBuffer> DataReceived;
     public bool IsConnected => _connected;
     
     private UIManager _uiManager;
     private SimpleWebClient _ws;
-    private Messenger _messenger = new Messenger();
     private bool _connected;
     private Coroutine _heartbeatCoroutine;
-    
-    // todo move this into a client message router, so that web client and local client can share logic in AddListener(), Remove, on data receive
-    public Dictionary<Type, IClientMessageListener> _messageListeners = new Dictionary<Type, IClientMessageListener>();
 
     private void Awake()
     {
@@ -86,12 +82,7 @@ public class WebClient : MonoBehaviour, IClient
         BitBuffer bitBuffer = BufferPool.GetBitBuffer();
         bitBuffer.FromArray(data.Array, data.Count);
         
-        IBitSerializable message = _messenger.Receive(bitBuffer);
-        Type type = message.GetType();
-        if (_messageListeners.TryGetValue(type, out IClientMessageListener messageListener))
-        {
-            messageListener.SendMessage(message);
-        }
+        DataReceived?.Invoke(bitBuffer);
     }
     
     private void WsOnonError(Exception exception)
@@ -128,35 +119,12 @@ public class WebClient : MonoBehaviour, IClient
         _uiManager.SetStatusText("Connecting...");
     }
 
-    public void Send(IBitSerializable serializable)
+    public void Send(BitBuffer data)
     {
-        BitBuffer bitBuffer = _messenger.Serialize(serializable);
         byte[] byteBuffer = BufferPool.GetByteBuffer();
-        bitBuffer.ToArray(byteBuffer);
-        ArraySegment<byte> bytes = new ArraySegment<byte>(byteBuffer, 0, bitBuffer.Length);
+        data.ToArray(byteBuffer);
+        ArraySegment<byte> bytes = new ArraySegment<byte>(byteBuffer, 0, data.Length);
         _ws.Send(bytes);
-    }
-
-    public void AddListener<T>(IClient.MessageReceivedDelegate<T> listener) where T : IBitSerializable
-    {
-        Type type = typeof(T);
-        if (!_messageListeners.TryGetValue(type, out IClientMessageListener messageListener))
-        {
-            _messageListeners[typeof(T)] = messageListener = new ClientMessageListener<T>();
-            _messageListeners.Add(type, messageListener);
-        }
-        ClientMessageListener<T> typedHandler = (ClientMessageListener<T>) messageListener;
-        typedHandler.AddListener(listener);
-    }
-
-    public void RemoveListener<T>(IClient.MessageReceivedDelegate<T> listener) where T : IBitSerializable
-    {
-        Type type = typeof(T);
-        if (_messageListeners.TryGetValue(type, out IClientMessageListener messageListener))
-        {
-            ClientMessageListener<T> typedListener = (ClientMessageListener<T>) messageListener;
-            typedListener.RemoveListener(listener);
-        }
     }
 
     private IEnumerator HeartbeatCoroutine()
@@ -165,7 +133,7 @@ public class WebClient : MonoBehaviour, IClient
         {
             yield return new WaitForSeconds((Constants.ReceiveTimeoutMS / 1000f) / 2);
             
-            Send(new HeartbeatMessage());
+            //Send(new HeartbeatMessage());
         }
     }
 }

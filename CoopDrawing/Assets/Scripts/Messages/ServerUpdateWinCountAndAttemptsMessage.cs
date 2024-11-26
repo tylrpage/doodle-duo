@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using NetStack.Serialization;
 using UnityEngine;
 
-public struct ServerUpdateWinCountAndAttempts : IBitSerializable
+public struct ServerUpdateWinCountAndAttemptsMessage : IBitSerializable
 {
     public uint WinCount;
     public uint Attempts;

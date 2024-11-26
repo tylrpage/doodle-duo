@@ -1,4 +1,5 @@
 ﻿using System;
+using NetStack.Serialization;
 
 namespace Networking
 {
@@ -10,11 +11,8 @@ namespace Networking
         public delegate void PeerDisconnectedDelegate(int peerID);
         public event PeerDisconnectedDelegate PeerDisconnected;
         
-        public void Send(int peerID, IBitSerializable message);
+        public event Action<int, BitBuffer> DataReceived;
         
-        public delegate void MessageReceivedDelegate<T>(int peerID, T message) where T : IBitSerializable;
-        public void AddListener<T>(MessageReceivedDelegate<T> listener) where T : IBitSerializable;
-        
-        public void RemoveListener<T>(MessageReceivedDelegate<T> listener) where T : IBitSerializable;
+        public void Send(int peerID, BitBuffer data);
     }
 }

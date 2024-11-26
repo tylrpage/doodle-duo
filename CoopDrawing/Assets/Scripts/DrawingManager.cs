@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using NetStack.Serialization;
 using UnityEngine;
 
 public class DrawingManager : MonoBehaviour, IService
@@ -39,7 +40,11 @@ public class DrawingManager : MonoBehaviour, IService
         DotPosition = PageSize / 2f;
         
         _networkManager = GameManager.Instance.GetService<NetworkManager>();
-        _networkManager.MessageReceived += OnMessageReceived;
+        _networkManager.ServerMessageRouter.AddListener<ClientInputMessage>(OnClientInputMessage);
+        _networkManager.ClientMessageRouter.AddListener<ServerGameStateMessage>(OnServerGameStateMessage);
+        _networkManager.ClientMessageRouter.AddListener<ServerRoleAssignmentMessage>(OnServerRoleAssignmentMessage);
+        _networkManager.ClientMessageRouter.AddListener<ServerPlayingStateMessage>(OnServerPlayingStateMessage);
+        _networkManager.ClientMessageRouter.AddListener<ServerUpdateWinCountAndAttemptsMessage>(OnServerUpdateWinCountAndAttemptsMessage);
         
         _stateManager = GameManager.Instance.GetService<StateManager>();
 
@@ -64,45 +69,57 @@ public class DrawingManager : MonoBehaviour, IService
         }
     }
 
-    private void OnMessageReceived(IBitSerializable message)
+    private void OnDestroy()
     {
-        switch (message)
+        _networkManager.ServerMessageRouter.RemoveListener<ClientInputMessage>(OnClientInputMessage);
+        _networkManager.ClientMessageRouter.RemoveListener<ServerGameStateMessage>(OnServerGameStateMessage);
+        _networkManager.ClientMessageRouter.RemoveListener<ServerRoleAssignmentMessage>(OnServerRoleAssignmentMessage);
+        _networkManager.ClientMessageRouter.RemoveListener<ServerPlayingStateMessage>(OnServerPlayingStateMessage);
+        _networkManager.ClientMessageRouter.RemoveListener<ServerUpdateWinCountAndAttemptsMessage>(OnServerUpdateWinCountAndAttemptsMessage);
+    }
+
+    private void OnClientInputMessage(int peerId, ClientInputMessage cim)
+    {
+        if (_stateManager.CurrentState == StateManager.State.Playing)
         {
-            case ClientInputMessage inputMessage:
-                if (_stateManager.CurrentState == StateManager.State.Playing)
-                {
-                    MoveDot(inputMessage.Direction);
-                }
-                break;
-            case ServerGameStateMessage gameStateMessage:
-                if (gameStateMessage.DoReset)
-                {
-                    DotPosition = _imageManager.CurrentLevel.start;
-                    playerDrawing.Clear();
-                    DotReset?.Invoke();
-                }
-                else
-                {
-                    DotPosition = gameStateMessage.DotPosition;
-                    playerDrawing.AdvancePixelData(DotPosition);
-                    DotMoved?.Invoke(DotPosition);
-                }
-                break;
-            case ServerRoleAssignmentMessage roleAssignmentMessage:
-                _currentRole = roleAssignmentMessage.CurrentRole;
-                RoleChanged?.Invoke(roleAssignmentMessage.CurrentRole);
-                break;
-            case ServerPlayingStateMessage playingStateMessage:
-                // We have drawing manager handle this message there is one sole handler
-                // and we can garuntee the image is changed first
-                _imageManager.ChangeImage(playingStateMessage.ImageIndex);
-                TimeLeft = playingStateMessage.TimeLeft;
-                break;
-            case ServerUpdateWinCountAndAttempts updateMessage:
-                WinCount = updateMessage.WinCount;
-                Attempts = updateMessage.Attempts;
-                break;
+            MoveDot(cim.Direction);
         }
+    }
+
+    private void OnServerGameStateMessage(ServerGameStateMessage sgsm)
+    {
+        if (sgsm.DoReset)
+        {
+            DotPosition = _imageManager.CurrentLevel.start;
+            playerDrawing.Clear();
+            DotReset?.Invoke();
+        }
+        else
+        {
+            DotPosition = sgsm.DotPosition;
+            playerDrawing.AdvancePixelData(DotPosition);
+            DotMoved?.Invoke(DotPosition);
+        }
+    }
+    
+    private void OnServerRoleAssignmentMessage(ServerRoleAssignmentMessage sram)
+    {
+        _currentRole = sram.CurrentRole;
+        RoleChanged?.Invoke(sram.CurrentRole);
+    }
+
+    private void OnServerPlayingStateMessage(ServerPlayingStateMessage spsm)
+    {
+        // We have drawing manager handle this message there is one sole handler
+        // and we can garuntee the image is changed first
+        _imageManager.ChangeImage(spsm.ImageIndex);
+        TimeLeft = spsm.TimeLeft;
+    }
+    
+    private void OnServerUpdateWinCountAndAttemptsMessage(ServerUpdateWinCountAndAttemptsMessage suwca)
+    {
+        WinCount = suwca.WinCount;
+        Attempts = suwca.Attempts;
     }
 
     private void Update()
@@ -124,7 +141,7 @@ public class DrawingManager : MonoBehaviour, IService
             {
                 // If the dot moved, tell clients the dot position
                 _dotMovedSinceUpdate = false;
-                _networkManager.Server.SendAll(new ServerGameStateMessage()
+                _networkManager.SendToAllClient(new ServerGameStateMessage()
                 {
                     DotPosition = DotPosition,
                     DoReset = _resetNextUpdate
@@ -152,7 +169,7 @@ public class DrawingManager : MonoBehaviour, IService
                 _clientTimeSinceSentInput -= Constants.Step;
                 
                 // Send input to server
-                _networkManager.Client.Send(new ClientInputMessage()
+                _networkManager.SendToServer(new ClientInputMessage()
                 {
                     Direction = _clientUnsentInputTotal,
                     // todo: hook up rewinding
@@ -218,7 +235,7 @@ public class DrawingManager : MonoBehaviour, IService
         WinCount++;
         UpdateFile();
         
-        _networkManager.Server.SendAll(new ServerUpdateWinCountAndAttempts()
+        _networkManager.SendToAllClient(new ServerUpdateWinCountAndAttemptsMessage()
         {
             WinCount = WinCount,
             Attempts = Attempts,
@@ -230,7 +247,7 @@ public class DrawingManager : MonoBehaviour, IService
         Attempts++;
         UpdateFile();
         
-        _networkManager.Server.SendAll(new ServerUpdateWinCountAndAttempts()
+        _networkManager.SendToAllClient(new ServerUpdateWinCountAndAttemptsMessage()
         {
             WinCount = WinCount,
             Attempts = Attempts,

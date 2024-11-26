@@ -1,4 +1,5 @@
 ﻿using System;
+using NetStack.Serialization;
 
 namespace Networking
 {
@@ -6,11 +7,7 @@ namespace Networking
     {
         public event Action Connected;
         public event Action Disconnected;
-        public void Send(IBitSerializable message);
-        
-        public delegate void MessageReceivedDelegate<T>(T message) where T : IBitSerializable;
-        public void AddListener<T>(MessageReceivedDelegate<T> listener) where T : IBitSerializable;
-        
-        public void RemoveListener<T>(MessageReceivedDelegate<T> listener) where T : IBitSerializable;
+        public event Action<BitBuffer> DataReceived;
+        public void Send(BitBuffer data);
     }
 }

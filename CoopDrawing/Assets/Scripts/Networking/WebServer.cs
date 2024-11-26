@@ -9,28 +9,27 @@ using UnityEngine;
 
 public class WebServer : MonoBehaviour, IServer
 {
-    public event Action<IBitSerializable> MessageReceived;
     public event IServer.PeerConnectedDelegate PeerConnected;
     public event IServer.PeerDisconnectedDelegate PeerDisconnected;
-    
+    public event Action<int, BitBuffer> DataReceived;
+
     private SimpleWebServer _webServer;
     private Messenger _messenger;
     private bool _listening;
+    private NetworkManager _networkManager;
     private UIManager _uiManager;
     public List<int> ConnectedPeers { get; private set; } = new List<int>();
     private StateManager _stateManager;
     private ImageManager _imageManager;
     private DrawingManager _drawingManager;
     private Coroutine _heartbeatCoroutine;
-    
-    // todo move this into a server message router, so that web server and local server can share logic in AddListener(), Remove, on data receive
-    public Dictionary<Type, IServerMessageListener> _messageListeners = new Dictionary<Type, IServerMessageListener>();
 
     private void Awake()
     {
         Application.targetFrameRate = Constants.Tick;
         
         _uiManager = GameManager.Instance.GetService<UIManager>();
+        _networkManager = GameManager.Instance.GetService<NetworkManager>();
         
         _webServer = Listen();
         
@@ -111,7 +110,7 @@ public class WebServer : MonoBehaviour, IServer
         else
         {
             // Send current state to connecting client
-            Send(peerId, new ServerStateChangeMessage()
+            _networkManager.SendToClient(peerId, new ServerStateChangeMessage()
             {
                 StateId = (short)_stateManager.CurrentState,
             });
@@ -119,7 +118,7 @@ public class WebServer : MonoBehaviour, IServer
             if (_stateManager.CurrentState != StateManager.State.Waiting)
             {
                 // Give more info about the game that they would need to know
-                Send(peerId, new ServerPlayingStateMessage()
+                _networkManager.SendToClient(peerId, new ServerPlayingStateMessage()
                 {
                     ImageIndex = _imageManager.CurrentImageIndex,
                     TimeLeft = _drawingManager.TimeLeft,
@@ -128,7 +127,7 @@ public class WebServer : MonoBehaviour, IServer
         }
         
         // Give them the win count
-        Send(peerId, new ServerUpdateWinCountAndAttempts()
+        _networkManager.SendToClient(peerId, new ServerUpdateWinCountAndAttemptsMessage()
         {
             WinCount = _drawingManager.WinCount,
             Attempts = _drawingManager.Attempts,
@@ -159,57 +158,20 @@ public class WebServer : MonoBehaviour, IServer
         BitBuffer bitBuffer = BufferPool.GetBitBuffer();
         bitBuffer.FromArray(data.Array, data.Count);
         
-        IBitSerializable message = _messenger.Receive(bitBuffer);
-        Type type = message.GetType();
-        if (_messageListeners.TryGetValue(type, out IServerMessageListener messageListener))
-        {
-            messageListener.SendMessage(peerId, message);
-        }
+        DataReceived?.Invoke(peerId, bitBuffer);
     }
     
     private void WsOnonError(int connectionId, Exception exception)
     {
         Debug.LogError($"Web Server Error, Id: {connectionId}, {exception.Message}");
     }
-    
-    public void SendAll(IBitSerializable serializable)
-    {
-        BitBuffer bitBuffer = _messenger.Serialize(serializable);
-        byte[] byteBuffer = BufferPool.GetByteBuffer();
-        bitBuffer.ToArray(byteBuffer);
-        ArraySegment<byte> bytes = new ArraySegment<byte>(byteBuffer, 0, bitBuffer.Length);
-        _webServer.SendAll(ConnectedPeers, bytes);
-    }
 
-    public void Send(int peerId, IBitSerializable serializable)
+    public void Send(int peerId, BitBuffer data)
     {
-        BitBuffer bitBuffer = _messenger.Serialize(serializable);
         byte[] byteBuffer = BufferPool.GetByteBuffer();
-        bitBuffer.ToArray(byteBuffer);
-        ArraySegment<byte> bytes = new ArraySegment<byte>(byteBuffer, 0, bitBuffer.Length);
+        data.ToArray(byteBuffer);
+        ArraySegment<byte> bytes = new ArraySegment<byte>(byteBuffer, 0, data.Length);
         _webServer.SendOne(peerId, bytes);
-    }
-
-    public void AddListener<T>(IServer.MessageReceivedDelegate<T> listener) where T : IBitSerializable
-    {
-        Type type = typeof(T);
-        if (!_messageListeners.TryGetValue(type, out IServerMessageListener messageListener))
-        {
-            _messageListeners[typeof(T)] = messageListener = new ServerMessageListener<T>();
-            _messageListeners.Add(type, messageListener);
-        }
-        ServerMessageListener<T> typedHandler = (ServerMessageListener<T>) messageListener;
-        typedHandler.AddListener(listener);
-    }
-    
-    public void RemoveListener<T>(IServer.MessageReceivedDelegate<T> listener) where T : IBitSerializable
-    {
-        Type type = typeof(T);
-        if (_messageListeners.TryGetValue(type, out IServerMessageListener messageListener))
-        {
-            ServerMessageListener<T> typedListener = (ServerMessageListener<T>) messageListener;
-            typedListener.RemoveListener(listener);
-        }
     }
 
     private IEnumerator HeartbeatCoroutine()
@@ -218,7 +180,7 @@ public class WebServer : MonoBehaviour, IServer
         {
             yield return new WaitForSeconds((Constants.ReceiveTimeoutMS / 1000f) / 2);
             
-            SendAll(new HeartbeatMessage());
+            //SendAll(new HeartbeatMessage());
         }
     }
 }

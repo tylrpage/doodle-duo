@@ -49,18 +49,18 @@ public class ImageManager : MonoBehaviour, IService
     private void Start()
     {
         _networkManager = GameManager.Instance.GetService<NetworkManager>();
-        _networkManager.MessageReceived += OnMessageReceived;
+        _networkManager.ClientMessageRouter.AddListener<ServerChangeImageMessage>(OnServerChangeImageMessage);
     }
 
-    private void OnMessageReceived(IBitSerializable message)
+    private void OnDestroy()
     {
-        switch (message)
-        {
-            case ServerChangeImageMessage changeImageMessage:
-                CurrentImageIndex = changeImageMessage.ImageIndex;
-                ImageChanged?.Invoke();
-                break;
-        }
+        _networkManager.ClientMessageRouter.RemoveListener<ServerChangeImageMessage>(OnServerChangeImageMessage);
+    }
+
+    private void OnServerChangeImageMessage(ServerChangeImageMessage scim)
+    {
+        CurrentImageIndex = scim.ImageIndex;
+        ImageChanged?.Invoke();
     }
 
     public void GetNextImage()

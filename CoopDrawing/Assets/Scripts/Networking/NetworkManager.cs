@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using NetStack.Serialization;
+using Networking;
 using UnityEngine;
 
 #if UNITY_EDITOR
@@ -7,10 +10,6 @@ using ParrelSync;
 
 public class NetworkManager : MonoBehaviour, IService
 {
-    // Don't forget to check if it already IsSided when subbing
-    public event Action Sided;
-    public bool IsSided { get; private set; }
-    public event Action<IBitSerializable> MessageReceived;
     public event Action ClientConnected;
     public event Action ClientDisconnected;
     
@@ -18,12 +17,23 @@ public class NetworkManager : MonoBehaviour, IService
     [SerializeField] private bool editorConnectToRemote;
     
     public bool IsServer { get; private set; }
-    public WebClient Client { get; private set; }
-    public WebServer Server { get; private set; }
+    
+    private IClient _client;
+    private IServer _server;
+    // Have these message routers initialized, so that even if the client/server is not started, we can still subscribe to events
+    public ClientMessageRouter ClientMessageRouter { get; private set; } = new ClientMessageRouter();
+    public ServerMessageRouter ServerMessageRouter { get; private set; } = new ServerMessageRouter();
+    
+    // Server only
+    public List<int> ConnectedPeers { get; private set; }
+    
+    private Messenger _messenger;
     
     private void Awake()
     {
         GameManager.Instance.RegisterService(this);
+        
+        _messenger = new Messenger();
     }
     
     void Start()
@@ -62,28 +72,59 @@ public class NetworkManager : MonoBehaviour, IService
     private void StartClient(bool connectToRemote)
     {
         IsServer = false;
-        Client = gameObject.AddComponent<WebClient>();
-        Client.MessageReceived += OnClientOrServerMessageReceived;
-        Client.Connected += () => ClientConnected?.Invoke();
-        Client.Disconnected += () => ClientDisconnected?.Invoke();
-        Client.Connect(connectToRemote);
-        
-        Sided?.Invoke();
-        IsSided = true;
-    }
-
-    private void OnClientOrServerMessageReceived(IBitSerializable message)
-    {
-        MessageReceived?.Invoke(message);
+        WebClient webClient = gameObject.AddComponent<WebClient>();
+        _client = webClient;
+        _client.Connected += () => ClientConnected?.Invoke();
+        _client.Disconnected += () => ClientDisconnected?.Invoke();
+        _client.DataReceived += buffer =>
+        {
+            IBitSerializable message = _messenger.Receive(buffer);
+            ClientMessageRouter.ProcessMessage(message);
+        };
+        webClient.Connect(connectToRemote);
     }
 
     private void StartServer()
     {
         IsServer = true;
-        Server = gameObject.AddComponent<WebServer>();
-        Server.MessageReceived += OnClientOrServerMessageReceived;
-        
-        Sided?.Invoke();
-        IsSided = true;
+        _server = gameObject.AddComponent<WebServer>();
+        ConnectedPeers = new List<int>();
+        _server.PeerConnected += peerId => ConnectedPeers.Add(peerId);
+        _server.PeerDisconnected += peerId => ConnectedPeers.Remove(peerId);
+        _server.DataReceived += (id, buffer) =>
+        {
+            IBitSerializable message = _messenger.Receive(buffer);
+            ServerMessageRouter.ProcessMessage(id, message);
+        };
+    }
+    
+    public void SendToServer(IBitSerializable message)
+    {
+        if (!IsServer)
+        {
+            BitBuffer bitBuffer = _messenger.Serialize(message);
+            _client.Send(bitBuffer);
+        }
+    }
+    
+    public void SendToAllClient(IBitSerializable message)
+    {
+        if (IsServer)
+        {
+            BitBuffer bitBuffer = _messenger.Serialize(message);
+            foreach (int peerId in ConnectedPeers)
+            {
+                _server.Send(peerId, bitBuffer);   
+            }
+        }
+    }
+    
+    public void SendToClient(int peerId, IBitSerializable message)
+    {
+        if (IsServer)
+        {
+            BitBuffer bitBuffer = _messenger.Serialize(message);
+            _server.Send(peerId, bitBuffer);
+        }
     }
 }
